@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 200">
+  <!-- Orange eye shape -->
+  <ellipse cx="200" cy="100" rx="180" ry="80" fill="#FF6B35"/>
+  
+  <!-- White inner circle -->
+  <circle cx="200" cy="100" r="50" fill="white"/>
+  
+  <!-- Blue pupil -->
+  <circle cx="200" cy="100" r="25" fill="#2E4BC6"/>
+  
+  <!-- White highlight -->
+  <circle cx="210" cy="90" r="8" fill="white"/>
+  
+  <!-- Left eyelid highlight -->
+  <path d="M 50 70 Q 120 50 200 60 Q 280 50 350 70 L 300 85 Q 200 75 100 85 Z" fill="white" opacity="0.3"/>
+  
+  <!-- Right eyelid highlight -->
+  <path d="M 50 130 Q 120 150 200 140 Q 280 150 350 130 L 300 115 Q 200 125 100 115 Z" fill="white" opacity="0.3"/>
+</svg>

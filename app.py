@@ -11,9 +11,14 @@ from utils.image_utils import validate_image, resize_image
 # Page configuration
 st.set_page_config(
     page_title="Vispio - AI Image Captioning",
-    page_icon="👁️",
+    page_icon="logo.svg",
     layout="wide",
-    initial_sidebar_state="expanded"
+    initial_sidebar_state="expanded",
+    menu_items={
+        'Get Help': None,
+        'Report a bug': None,
+        'About': None
+    }
 )
 
 # Initialize services
@@ -28,22 +33,48 @@ st.markdown("""
 <style>
 .main-header {
     text-align: center;
-    padding: 2rem 0 1rem 0;
-    background: linear-gradient(90deg, #FF6B6B, #4ECDC4);
+    padding: 1rem 0 0.5rem 0;
+    background: linear-gradient(90deg, #FF6B35, #2E4BC6);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
     font-size: 3.5rem;
     font-weight: bold;
-    margin-bottom: 1rem;
+    margin-bottom: 0.5rem;
 }
 
 .subtitle {
     text-align: center;
     color: #666;
     font-size: 1.3rem;
-    margin-bottom: 3rem;
+    margin-bottom: 2rem;
     font-weight: 300;
+}
+
+.logo-container svg {
+    width: 80px;
+    height: 40px;
+    margin-top: 1rem;
+}
+
+/* Hide Streamlit menu and footer */
+#MainMenu {visibility: hidden;}
+footer {visibility: hidden;}
+header {visibility: hidden;}
+
+/* Hide the hamburger menu */
+.css-1rs6os {display: none;}
+.css-17ziqus {display: none;}
+
+/* Responsive design */
+@media (max-width: 768px) {
+    .main-header {
+        font-size: 2.5rem;
+    }
+    .logo-container svg {
+        width: 60px;
+        height: 30px;
+    }
 }
 
 .upload-section {
@@ -97,9 +128,36 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 def main():
-    # Header
-    st.markdown('<div class="main-header">👁️ Vispio</div>', unsafe_allow_html=True)
-    st.markdown('<div class="subtitle">AI-Powered Image Captioning with Audio Narration</div>', unsafe_allow_html=True)
+    # Header with logo
+    col_logo, col_title, col_theme = st.columns([1, 3, 1])
+    
+    with col_logo:
+        with open("logo.svg", "r") as f:
+            logo_svg = f.read()
+        st.markdown(f'<div class="logo-container" style="text-align: center; padding-top: 1rem;">{logo_svg}</div>', unsafe_allow_html=True)
+    
+    with col_title:
+        st.markdown('<div class="main-header">Vispio</div>', unsafe_allow_html=True)
+        st.markdown('<div class="subtitle">Let AI Speak Your Pictures</div>', unsafe_allow_html=True)
+    
+    with col_theme:
+        # Theme selector
+        st.markdown("<br><br>", unsafe_allow_html=True)
+        theme = st.selectbox("🎨", ["Light", "Dark"], label_visibility="collapsed")
+        
+        # Apply theme
+        if theme == "Dark":
+            st.markdown("""
+            <style>
+            .stApp {
+                background-color: #1E1E1E;
+                color: white;
+            }
+            .subtitle {
+                color: #CCCCCC !important;
+            }
+            </style>
+            """, unsafe_allow_html=True)
     
     # Initialize services
     try:
@@ -283,7 +341,6 @@ def main():
         """
         <div style='text-align: center; color: #666;'>
             <p>🚀 Powered by <strong>Vispio</strong> | Google Gemini Vision API</p>
-            <p>Made with ❤️ using Streamlit</p>
         </div>
         """,
         unsafe_allow_html=True
