@@ -28,21 +28,22 @@ st.markdown("""
 <style>
 .main-header {
     text-align: center;
-    padding: 1rem 0;
+    padding: 2rem 0 1rem 0;
     background: linear-gradient(90deg, #FF6B6B, #4ECDC4);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
-    font-size: 3rem;
+    font-size: 3.5rem;
     font-weight: bold;
-    margin-bottom: 2rem;
+    margin-bottom: 1rem;
 }
 
 .subtitle {
     text-align: center;
     color: #666;
-    font-size: 1.2rem;
-    margin-bottom: 2rem;
+    font-size: 1.3rem;
+    margin-bottom: 3rem;
+    font-weight: 300;
 }
 
 .upload-section {
@@ -118,18 +119,18 @@ def main():
             help="Choose the style of image caption you prefer"
         )
         
-        # Audio settings
-        st.subheader("🔊 Audio Settings")
-        audio_speed = st.slider("Speech Speed", 0.5, 2.0, 1.0, 0.1)
-        audio_language = st.selectbox("Language", ["en", "es", "fr", "de", "it"])
-        
         # Advanced options
         with st.expander("Advanced Options"):
             max_tokens = st.slider("Max Caption Length", 50, 300, 150)
             temperature = st.slider("Creativity", 0.1, 1.0, 0.7, 0.1)
     
-    # Main content area
-    col1, col2 = st.columns([1, 1])
+    # Set default audio settings
+    audio_speed = 1.0
+    audio_language = "en"
+    
+    # Main content area with better spacing
+    st.markdown("<br>", unsafe_allow_html=True)
+    col1, col2 = st.columns([1, 1], gap="large")
     
     with col1:
         st.subheader("📷 Image Upload")
@@ -215,14 +216,12 @@ def main():
                 
                 st.markdown('</div>', unsafe_allow_html=True)
                 
-                # Audio generation section
-                st.subheader("🔊 Audio Narration")
-                
-                col_audio1, col_audio2 = st.columns([1, 1])
-                
-                with col_audio1:
-                    if st.button("🎵 Generate Audio", use_container_width=True):
-                        with st.spinner("Generating audio..."):
+                # Audio generation section - centered button
+                st.markdown("<br>", unsafe_allow_html=True)
+                col1, col2, col3 = st.columns([1, 2, 1])
+                with col2:
+                    if st.button("🎵 Generate Audio Narration", type="secondary", use_container_width=True):
+                        with st.spinner("Generating audio narration..."):
                             try:
                                 audio_file = audio_service.text_to_speech(
                                     edited_caption,
