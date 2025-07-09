@@ -267,15 +267,12 @@ def main():
         st.error(f"Failed to initialize services: {str(e)}")
         st.stop()
     
-    # Settings panel with toggle
-    settings_open = st.session_state.get('settings_open', False)
-    
     # Settings toggle button in top area
     col_settings_btn, col_spacer = st.columns([1, 4])
     with col_settings_btn:
-        if st.button("⚙️ Settings" if not settings_open else "✕ Close", key="settings_toggle"):
-            st.session_state.settings_open = not settings_open
-            st.rerun()
+        # Use checkbox instead of button for more reliable state management
+        settings_open = st.checkbox("⚙️ Settings", value=st.session_state.get('settings_open', False), key="settings_checkbox")
+        st.session_state.settings_open = settings_open
     
     # Conditional sidebar based on toggle state
     if st.session_state.get('settings_open', False):
@@ -295,8 +292,9 @@ def main():
                 temperature = st.slider("Creativity", 0.1, 1.0, 0.7, 0.1)
                 
             # Close button at bottom of sidebar
-            if st.button("✕ Close Settings", use_container_width=True):
+            if st.button("✕ Close Settings", use_container_width=True, key="close_settings"):
                 st.session_state.settings_open = False
+                st.session_state.settings_checkbox = False
                 st.rerun()
     else:
         # Default values when settings are closed
