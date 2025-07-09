@@ -14,7 +14,7 @@ class GeminiService:
             raise ValueError("GEMINI_API_KEY environment variable is required")
         
         self.client = genai.Client(api_key=api_key)
-        self.model = "gemini-2.5-flash"
+        self.model = "gemini-1.5-flash"  # Try the stable 1.5 version
         
         logging.basicConfig(level=logging.INFO)
         self.logger = logging.getLogger(__name__)
@@ -69,41 +69,53 @@ class GeminiService:
             
             self.logger.info(f"Generating {style} caption with temperature {temperature}")
             
-            # Generate content using Gemini
+            # Try simpler API call structure
             response = self.client.models.generate_content(
                 model=self.model,
                 contents=[
-                    types.Content(
-                        role="user",
-                        parts=[
-                            types.Part.from_bytes(
-                                data=image_bytes,
-                                mime_type="image/jpeg",
-                            ),
-                            types.Part(text=prompt)
-                        ]
-                    )
+                    types.Part.from_bytes(
+                        data=image_bytes,
+                        mime_type="image/jpeg",
+                    ),
+                    types.Part(text=prompt)
                 ],
                 config=types.GenerateContentConfig(
                     max_output_tokens=max_tokens,
-                    temperature=temperature,
-                    response_mime_type="text/plain"
+                    temperature=temperature
                 )
             )
             
-            # Check for response and extract text properly
-            if not response or not response.candidates:
-                raise ValueError("No response candidates from Gemini API")
+            self.logger.info(f"API Response: {response}")
             
-            candidate = response.candidates[0]
-            if not candidate or not candidate.content or not candidate.content.parts:
-                raise ValueError("Empty response from Gemini API")
+            # Debug response structure
+            if response:
+                self.logger.info(f"Response candidates: {len(response.candidates) if response.candidates else 0}")
+                if response.candidates:
+                    candidate = response.candidates[0]
+                    self.logger.info(f"Candidate finish_reason: {getattr(candidate, 'finish_reason', 'unknown')}")
+                    if hasattr(candidate, 'content') and candidate.content:
+                        self.logger.info(f"Content parts: {len(candidate.content.parts) if candidate.content.parts else 0}")
             
-            text_parts = [part.text for part in candidate.content.parts if part.text]
-            if not text_parts:
-                raise ValueError("No text content in Gemini API response")
-            
-            caption_text = " ".join(text_parts).strip()
+            # Extract text from response
+            if not response or not hasattr(response, 'text') or not response.text:
+                if response and response.candidates:
+                    # Try alternative extraction
+                    candidate = response.candidates[0]
+                    if candidate and hasattr(candidate, 'content') and candidate.content and candidate.content.parts:
+                        text_parts = []
+                        for part in candidate.content.parts:
+                            if hasattr(part, 'text') and part.text:
+                                text_parts.append(part.text)
+                        if text_parts:
+                            caption_text = " ".join(text_parts).strip()
+                        else:
+                            raise ValueError(f"No text in response parts. Finish reason: {getattr(candidate, 'finish_reason', 'unknown')}")
+                    else:
+                        raise ValueError("No content in response candidate")
+                else:
+                    raise ValueError("No response or candidates from Gemini API")
+            else:
+                caption_text = response.text.strip()
             
             self.logger.info(f"Successfully generated caption: {caption_text[:50]}...")
             
