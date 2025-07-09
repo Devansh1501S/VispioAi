@@ -73,25 +73,41 @@ class GeminiService:
             response = self.client.models.generate_content(
                 model=self.model,
                 contents=[
-                    types.Part.from_bytes(
-                        data=image_bytes,
-                        mime_type="image/jpeg",
-                    ),
-                    prompt
+                    types.Content(
+                        role="user",
+                        parts=[
+                            types.Part.from_bytes(
+                                data=image_bytes,
+                                mime_type="image/jpeg",
+                            ),
+                            types.Part(text=prompt)
+                        ]
+                    )
                 ],
                 config=types.GenerateContentConfig(
                     max_output_tokens=max_tokens,
-                    temperature=temperature
+                    temperature=temperature,
+                    response_mime_type="text/plain"
                 )
             )
             
-            if not response.text:
+            # Check for response and extract text properly
+            if not response or not response.candidates:
+                raise ValueError("No response candidates from Gemini API")
+            
+            candidate = response.candidates[0]
+            if not candidate or not candidate.content or not candidate.content.parts:
                 raise ValueError("Empty response from Gemini API")
             
-            caption = response.text.strip()
-            self.logger.info(f"Successfully generated caption: {caption[:50]}...")
+            text_parts = [part.text for part in candidate.content.parts if part.text]
+            if not text_parts:
+                raise ValueError("No text content in Gemini API response")
             
-            return caption
+            caption_text = " ".join(text_parts).strip()
+            
+            self.logger.info(f"Successfully generated caption: {caption_text[:50]}...")
+            
+            return caption_text
             
         except Exception as e:
             self.logger.error(f"Error generating caption: {str(e)}")

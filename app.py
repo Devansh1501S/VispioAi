@@ -162,7 +162,7 @@ def main():
                 # Resize image if too large
                 display_image = resize_image(image, max_size=(800, 600))
                 
-                st.image(display_image, caption="Uploaded Image", use_column_width=True)
+                st.image(display_image, caption="Uploaded Image", use_container_width=True)
                 
                 # Store image in session state
                 st.session_state.current_image = image
@@ -180,10 +180,9 @@ def main():
             if st.button("🚀 Generate Caption", type="primary", use_container_width=True):
                 with st.spinner("Generating caption..."):
                     try:
-                        # Convert PIL image to bytes
-                        img_byte_arr = io.BytesIO()
-                        st.session_state.current_image.save(img_byte_arr, format='JPEG')
-                        img_bytes = img_byte_arr.getvalue()
+                        # Optimize image for API
+                        from utils.image_utils import optimize_image_for_api
+                        img_bytes = optimize_image_for_api(st.session_state.current_image, max_file_size_mb=2.0)
                         
                         # Generate caption using Gemini
                         caption = gemini_service.generate_caption(
