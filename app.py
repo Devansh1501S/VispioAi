@@ -66,6 +66,78 @@ header {visibility: hidden;}
 .css-1rs6os {display: none;}
 .css-17ziqus {display: none;}
 
+/* Toggle switch styling */
+.toggle-switch {
+    position: relative;
+    display: inline-block;
+    width: 60px;
+    height: 34px;
+    margin-top: 1.5rem;
+}
+
+.toggle-switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #ccc;
+    transition: .4s;
+    border-radius: 34px;
+}
+
+.slider:before {
+    position: absolute;
+    content: "";
+    height: 26px;
+    width: 26px;
+    left: 4px;
+    bottom: 4px;
+    background-color: white;
+    transition: .4s;
+    border-radius: 50%;
+}
+
+input:checked + .slider {
+    background-color: #2196F3;
+}
+
+input:checked + .slider:before {
+    transform: translateX(26px);
+}
+
+/* Enhanced front page styling */
+.hero-section {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-radius: 15px;
+    padding: 2rem;
+    margin: 2rem 0;
+    text-align: center;
+    color: white;
+}
+
+.feature-card {
+    background: white;
+    border-radius: 10px;
+    padding: 1.5rem;
+    margin: 1rem 0;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    border-left: 4px solid #FF6B35;
+    transition: transform 0.2s;
+}
+
+.feature-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+}
+
 /* Responsive design */
 @media (max-width: 768px) {
     .main-header {
@@ -74,6 +146,10 @@ header {visibility: hidden;}
     .logo-container svg {
         width: 60px;
         height: 30px;
+    }
+    .toggle-switch {
+        width: 50px;
+        height: 28px;
     }
 }
 
@@ -141,20 +217,24 @@ def main():
         st.markdown('<div class="subtitle">Let AI Speak Your Pictures</div>', unsafe_allow_html=True)
     
     with col_theme:
-        # Theme selector
-        st.markdown("<br><br>", unsafe_allow_html=True)
-        theme = st.selectbox("🎨", ["Light", "Dark"], label_visibility="collapsed")
+        # Theme toggle switch using Streamlit
+        st.markdown("<br>", unsafe_allow_html=True)
+        dark_mode = st.toggle("🌙 Dark Mode", key="theme_toggle")
         
-        # Apply theme
-        if theme == "Dark":
+        # Apply dark theme if enabled
+        if dark_mode:
             st.markdown("""
             <style>
             .stApp {
-                background-color: #1E1E1E;
-                color: white;
+                background-color: #0E1117 !important;
+                color: #FAFAFA !important;
             }
-            .subtitle {
-                color: #CCCCCC !important;
+            .feature-card {
+                background: #262730 !important;
+                color: #FAFAFA !important;
+            }
+            .hero-section {
+                background: linear-gradient(135deg, #1f2937 0%, #374151 100%) !important;
             }
             </style>
             """, unsafe_allow_html=True)
@@ -186,6 +266,41 @@ def main():
     audio_speed = 1.0
     audio_language = "en"
     
+    # Hero section
+    st.markdown("""
+    <div class="hero-section">
+        <h2 style="margin-bottom: 1rem;">Transform Your Images Into Stories</h2>
+        <p style="font-size: 1.1rem; margin-bottom: 0;">Upload any image and watch as AI creates detailed captions and brings them to life with natural speech narration.</p>
+    </div>
+    """, unsafe_allow_html=True)
+    
+    # Feature highlights
+    col_f1, col_f2, col_f3 = st.columns(3)
+    
+    with col_f1:
+        st.markdown("""
+        <div class="feature-card">
+            <h4>🎯 Smart Analysis</h4>
+            <p>Advanced AI understands context, objects, and emotions in your images</p>
+        </div>
+        """, unsafe_allow_html=True)
+    
+    with col_f2:
+        st.markdown("""
+        <div class="feature-card">
+            <h4>🎨 Multiple Styles</h4>
+            <p>Choose from descriptive, creative, technical, or simple caption styles</p>
+        </div>
+        """, unsafe_allow_html=True)
+    
+    with col_f3:
+        st.markdown("""
+        <div class="feature-card">
+            <h4>🔊 Audio Magic</h4>
+            <p>Convert captions to natural speech with high-quality text-to-speech</p>
+        </div>
+        """, unsafe_allow_html=True)
+
     # Main content area with better spacing
     st.markdown("<br>", unsafe_allow_html=True)
     col1, col2 = st.columns([1, 1], gap="large")
@@ -335,16 +450,8 @@ def main():
         else:
             st.info("👆 Please upload an image to start generating captions.")
     
-    # Footer
+    # Clean footer with just a line
     st.markdown("---")
-    st.markdown(
-        """
-        <div style='text-align: center; color: #666;'>
-            <p>🚀 Powered by <strong>Vispio</strong> | Google Gemini Vision API</p>
-        </div>
-        """,
-        unsafe_allow_html=True
-    )
 
 if __name__ == "__main__":
     # Initialize session state
