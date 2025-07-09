@@ -138,6 +138,23 @@ input:checked + .slider:before {
     box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
 }
 
+/* Settings button styling */
+.settings-button {
+    background: linear-gradient(90deg, #FF6B35, #2E4BC6);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    padding: 0.5rem 1rem;
+    font-weight: bold;
+    cursor: pointer;
+    transition: transform 0.2s;
+}
+
+.settings-button:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
 /* Responsive design */
 @media (max-width: 768px) {
     .main-header {
@@ -150,6 +167,10 @@ input:checked + .slider:before {
     .toggle-switch {
         width: 50px;
         height: 28px;
+    }
+    .feature-card {
+        margin: 0.5rem 0;
+        padding: 1rem;
     }
 }
 
@@ -246,21 +267,42 @@ def main():
         st.error(f"Failed to initialize services: {str(e)}")
         st.stop()
     
-    # Sidebar configuration
-    with st.sidebar:
-        st.header("⚙️ Settings")
-        
-        # Caption style selection
-        caption_style = st.selectbox(
-            "Caption Style",
-            ["Descriptive", "Creative", "Technical", "Simple"],
-            help="Choose the style of image caption you prefer"
-        )
-        
-        # Advanced options
-        with st.expander("Advanced Options"):
-            max_tokens = st.slider("Max Caption Length", 50, 300, 150)
-            temperature = st.slider("Creativity", 0.1, 1.0, 0.7, 0.1)
+    # Settings panel with toggle
+    settings_open = st.session_state.get('settings_open', False)
+    
+    # Settings toggle button in top area
+    col_settings_btn, col_spacer = st.columns([1, 4])
+    with col_settings_btn:
+        if st.button("⚙️ Settings" if not settings_open else "✕ Close", key="settings_toggle"):
+            st.session_state.settings_open = not settings_open
+            st.rerun()
+    
+    # Conditional sidebar based on toggle state
+    if st.session_state.get('settings_open', False):
+        with st.sidebar:
+            st.header("⚙️ Settings Panel")
+            
+            # Caption style selection
+            caption_style = st.selectbox(
+                "Caption Style",
+                ["Descriptive", "Creative", "Technical", "Simple"],
+                help="Choose the style of image caption you prefer"
+            )
+            
+            # Advanced options
+            with st.expander("Advanced Options"):
+                max_tokens = st.slider("Max Caption Length", 50, 300, 150)
+                temperature = st.slider("Creativity", 0.1, 1.0, 0.7, 0.1)
+                
+            # Close button at bottom of sidebar
+            if st.button("✕ Close Settings", use_container_width=True):
+                st.session_state.settings_open = False
+                st.rerun()
+    else:
+        # Default values when settings are closed
+        caption_style = "Descriptive"
+        max_tokens = 150
+        temperature = 0.7
     
     # Set default audio settings
     audio_speed = 1.0
@@ -461,5 +503,7 @@ if __name__ == "__main__":
         st.session_state.caption_generated = False
     if 'audio_generated' not in st.session_state:
         st.session_state.audio_generated = False
+    if 'settings_open' not in st.session_state:
+        st.session_state.settings_open = False
     
     main()
