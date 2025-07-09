@@ -139,20 +139,28 @@ input:checked + .slider:before {
 }
 
 /* Settings button styling */
-.settings-button {
-    background: linear-gradient(90deg, #FF6B35, #2E4BC6);
-    color: white;
-    border: none;
+.stButton > button {
     border-radius: 8px;
-    padding: 0.5rem 1rem;
     font-weight: bold;
-    cursor: pointer;
-    transition: transform 0.2s;
+    transition: all 0.2s ease;
+    border: 2px solid transparent;
 }
 
-.settings-button:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+.stButton > button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+/* Primary button for opening settings */
+.stButton > button[kind="primary"] {
+    background: linear-gradient(90deg, #FF6B35, #2E4BC6);
+    border-color: #FF6B35;
+}
+
+/* Secondary button for closing settings */
+.stButton > button[kind="secondary"] {
+    background: linear-gradient(90deg, #dc3545, #6c757d);
+    border-color: #dc3545;
 }
 
 /* Responsive design */
@@ -270,14 +278,18 @@ def main():
     # Settings toggle button in top area
     col_settings_btn, col_spacer = st.columns([1, 4])
     with col_settings_btn:
-        # Use checkbox instead of button for more reliable state management
-        settings_open = st.checkbox("⚙️ Settings", value=st.session_state.get('settings_open', False), key="settings_checkbox")
-        st.session_state.settings_open = settings_open
+        # Toggle button for settings
+        if st.button("⚙️ Settings" if not st.session_state.get('settings_open', False) else "✕ Close", 
+                     type="primary" if not st.session_state.get('settings_open', False) else "secondary",
+                     use_container_width=True):
+            st.session_state.settings_open = not st.session_state.get('settings_open', False)
+            st.rerun()
     
     # Conditional sidebar based on toggle state
     if st.session_state.get('settings_open', False):
         with st.sidebar:
             st.header("⚙️ Settings Panel")
+            st.markdown("---")
             
             # Caption style selection
             caption_style = st.selectbox(
@@ -286,16 +298,26 @@ def main():
                 help="Choose the style of image caption you prefer"
             )
             
+            st.markdown("---")
+            
             # Advanced options
-            with st.expander("Advanced Options"):
+            with st.expander("🔧 Advanced Options"):
                 max_tokens = st.slider("Max Caption Length", 50, 300, 150)
                 temperature = st.slider("Creativity", 0.1, 1.0, 0.7, 0.1)
                 
+            st.markdown("---")
+            
             # Close button at bottom of sidebar
-            if st.button("✕ Close Settings", use_container_width=True, key="close_settings"):
+            if st.button("✕ Close Settings", type="secondary", use_container_width=True):
                 st.session_state.settings_open = False
-                st.session_state.settings_checkbox = False
                 st.rerun()
+                
+            # Info section
+            st.markdown("**💡 Quick Tips:**")
+            st.markdown("- **Descriptive**: Detailed analysis")
+            st.markdown("- **Creative**: Artistic storytelling")
+            st.markdown("- **Technical**: Photography focus")
+            st.markdown("- **Simple**: Brief description")
     else:
         # Default values when settings are closed
         caption_style = "Descriptive"
