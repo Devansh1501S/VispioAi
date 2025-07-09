@@ -144,10 +144,19 @@ def main():
         # Image preview
         if uploaded_file is not None:
             try:
+                # Reset file pointer to beginning
+                uploaded_file.seek(0)
+                
                 # Validate and process image
                 image = Image.open(uploaded_file)
-                if not validate_image(image):
-                    st.error("Invalid image format or corrupted file.")
+                
+                # Basic validation without calling verify() which can consume the image
+                if image.size[0] < 10 or image.size[1] < 10:
+                    st.error("Image is too small. Please upload a larger image.")
+                    st.stop()
+                
+                if image.size[0] * image.size[1] > 100_000_000:
+                    st.error("Image is too large. Please upload a smaller image.")
                     st.stop()
                 
                 # Resize image if too large

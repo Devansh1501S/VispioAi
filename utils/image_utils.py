@@ -19,11 +19,10 @@ def validate_image(image: Image.Image) -> bool:
         True if image is valid, False otherwise
     """
     try:
-        # Check if image is valid
-        image.verify()
-        
-        # Reload image since verify() may have consumed it
-        image.load()
+        # Check if image object exists
+        if image is None:
+            logger.error("Image object is None")
+            return False
         
         # Check minimum dimensions
         width, height = image.size
@@ -37,9 +36,16 @@ def validate_image(image: Image.Image) -> bool:
             return False
         
         # Check if image has valid mode
-        valid_modes = ['RGB', 'RGBA', 'L', 'P']
+        valid_modes = ['RGB', 'RGBA', 'L', 'P', '1']
         if image.mode not in valid_modes:
             logger.warning(f"Unsupported image mode: {image.mode}")
+            return False
+        
+        # Try to load image data to ensure it's not corrupted
+        try:
+            image.load()
+        except Exception as load_error:
+            logger.error(f"Failed to load image data: {str(load_error)}")
             return False
         
         return True
