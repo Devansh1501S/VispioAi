@@ -6,6 +6,7 @@ from PIL import Image
 import time
 from services.gemini_service import GeminiService
 from services.audio_service import AudioService
+from services.chatbot_service import ChatbotService
 from utils.image_utils import validate_image, resize_image
 
 # Page configuration
@@ -26,7 +27,8 @@ st.set_page_config(
 def initialize_services():
     gemini_service = GeminiService()
     audio_service = AudioService()
-    return gemini_service, audio_service
+    chatbot_service = ChatbotService()
+    return gemini_service, audio_service, chatbot_service
 
 # Custom CSS for enhanced styling
 st.markdown("""
@@ -270,7 +272,7 @@ def main():
     
     # Initialize services
     try:
-        gemini_service, audio_service = initialize_services()
+        gemini_service, audio_service, chatbot_service = initialize_services()
     except Exception as e:
         st.error(f"Failed to initialize services: {str(e)}")
         st.stop()
@@ -363,154 +365,297 @@ def main():
         </div>
         """, unsafe_allow_html=True)
 
-    # Main content area with better spacing
-    st.markdown("<br>", unsafe_allow_html=True)
-    col1, col2 = st.columns([1, 1], gap="large")
+    # Main navigation tabs
+    tab1, tab2 = st.tabs(["📷 Image Captioning", "💬 AI Chatbot"])
     
-    with col1:
-        st.subheader("📷 Image Upload")
-        
-        # File uploader with drag and drop
-        uploaded_file = st.file_uploader(
-            "Choose an image file",
-            type=['png', 'jpg', 'jpeg', 'gif', 'bmp', 'webp'],
-            help="Drag and drop an image or click to browse"
-        )
-        
-        # Image preview
-        if uploaded_file is not None:
-            try:
-                # Reset file pointer to beginning
-                uploaded_file.seek(0)
-                
-                # Validate and process image
-                image = Image.open(uploaded_file)
-                
-                # Basic validation without calling verify() which can consume the image
-                if image.size[0] < 10 or image.size[1] < 10:
-                    st.error("Image is too small. Please upload a larger image.")
-                    st.stop()
-                
-                if image.size[0] * image.size[1] > 100_000_000:
-                    st.error("Image is too large. Please upload a smaller image.")
-                    st.stop()
-                
-                # Resize image if too large
-                display_image = resize_image(image, max_size=(800, 600))
-                
-                st.image(display_image, caption="Uploaded Image", use_container_width=True)
-                
-                # Store image in session state
-                st.session_state.current_image = image
-                st.session_state.image_uploaded = True
-                
-            except Exception as e:
-                st.error(f"Error processing image: {str(e)}")
-                st.stop()
+    with tab1:
+        # Main content area with better spacing
+        st.markdown("<br>", unsafe_allow_html=True)
+        col1, col2 = st.columns([1, 1], gap="large")
     
-    with col2:
-        st.subheader("📝 Generated Caption")
+        with col1:
+            st.subheader("📷 Image Upload")
         
-        if 'current_image' in st.session_state and st.session_state.image_uploaded:
-            # Generate caption button
-            if st.button("🚀 Generate Caption", type="primary", use_container_width=True):
-                with st.spinner("Generating caption..."):
-                    try:
-                        # Optimize image for API
-                        from utils.image_utils import optimize_image_for_api
-                        img_bytes = optimize_image_for_api(st.session_state.current_image, max_file_size_mb=2.0)
-                        
-                        # Generate caption using Gemini
-                        caption = gemini_service.generate_caption(
-                            img_bytes, 
-                            style=caption_style.lower(),
-                            max_tokens=max_tokens,
-                            temperature=temperature
-                        )
-                        
-                        st.session_state.generated_caption = caption
-                        st.session_state.caption_generated = True
-                        
-                        # Success message
-                        st.markdown('<div class="success-message">✅ Caption generated successfully!</div>', unsafe_allow_html=True)
-                        
-                    except Exception as e:
-                        st.markdown(f'<div class="error-message">❌ Error generating caption: {str(e)}</div>', unsafe_allow_html=True)
-            
-            # Display and edit caption
-            if 'generated_caption' in st.session_state and st.session_state.caption_generated:
-                st.markdown('<div class="caption-box">', unsafe_allow_html=True)
-                
-                # Editable caption
-                edited_caption = st.text_area(
-                    "Edit Caption (optional)",
-                    value=st.session_state.generated_caption,
-                    height=100,
-                    help="You can edit the caption before generating audio"
-                )
-                
-                st.markdown('</div>', unsafe_allow_html=True)
-                
-                # Audio generation section - centered button
-                st.markdown("<br>", unsafe_allow_html=True)
-                col1, col2, col3 = st.columns([1, 2, 1])
-                with col2:
-                    if st.button("🎵 Generate Audio Narration", type="secondary", use_container_width=True):
-                        with st.spinner("Generating audio narration..."):
-                            try:
-                                audio_file = audio_service.text_to_speech(
-                                    edited_caption,
-                                    speed=audio_speed,
-                                    language=audio_language
-                                )
-                                
-                                st.session_state.audio_file = audio_file
-                                st.session_state.audio_generated = True
-                                st.session_state.final_caption = edited_caption
-                                
-                                st.success("Audio generated successfully!")
-                                
-                            except Exception as e:
-                                st.error(f"Error generating audio: {str(e)}")
-                
-                # Audio player and download options
-                if 'audio_generated' in st.session_state and st.session_state.audio_generated:
-                    st.markdown('<div class="audio-controls">', unsafe_allow_html=True)
+            # File uploader with drag and drop
+            uploaded_file = st.file_uploader(
+                "Choose an image file",
+                type=['png', 'jpg', 'jpeg', 'gif', 'bmp', 'webp'],
+                help="Drag and drop an image or click to browse"
+            )
+        
+            # Image preview
+            if uploaded_file is not None:
+                try:
+                    # Reset file pointer to beginning
+                    uploaded_file.seek(0)
                     
-                    # Audio player
-                    with open(st.session_state.audio_file, "rb") as audio_file:
-                        audio_bytes = audio_file.read()
-                        st.audio(audio_bytes, format='audio/wav')
+                    # Validate and process image
+                    image = Image.open(uploaded_file)
+                    
+                    # Basic validation without calling verify() which can consume the image
+                    if image.size[0] < 10 or image.size[1] < 10:
+                        st.error("Image is too small. Please upload a larger image.")
+                        st.stop()
+                    
+                    if image.size[0] * image.size[1] > 100_000_000:
+                        st.error("Image is too large. Please upload a smaller image.")
+                        st.stop()
+                    
+                    # Resize image if too large
+                    display_image = resize_image(image, max_size=(800, 600))
+                    
+                    st.image(display_image, caption="Uploaded Image", use_container_width=True)
+                    
+                    # Store image in session state
+                    st.session_state.current_image = image
+                    st.session_state.image_uploaded = True
+                    
+                except Exception as e:
+                    st.error(f"Error processing image: {str(e)}")
+                    st.stop()
+        
+        with col2:
+            st.subheader("📝 Generated Caption")
+        
+            if 'current_image' in st.session_state and st.session_state.image_uploaded:
+                # Generate caption button
+                if st.button("🚀 Generate Caption", type="primary", use_container_width=True):
+                    with st.spinner("Generating caption..."):
+                        try:
+                            # Optimize image for API
+                            from utils.image_utils import optimize_image_for_api
+                            img_bytes = optimize_image_for_api(st.session_state.current_image, max_file_size_mb=2.0)
+                            
+                            # Generate caption using Gemini
+                            caption = gemini_service.generate_caption(
+                                img_bytes, 
+                                style=caption_style.lower(),
+                                max_tokens=max_tokens,
+                                temperature=temperature
+                            )
+                            
+                            st.session_state.generated_caption = caption
+                            st.session_state.caption_generated = True
+                            
+                            # Success message
+                            st.markdown('<div class="success-message">✅ Caption generated successfully!</div>', unsafe_allow_html=True)
+                            
+                        except Exception as e:
+                            st.markdown(f'<div class="error-message">❌ Error generating caption: {str(e)}</div>', unsafe_allow_html=True)
+            
+                # Display and edit caption
+                if 'generated_caption' in st.session_state and st.session_state.caption_generated:
+                    st.markdown('<div class="caption-box">', unsafe_allow_html=True)
+                    
+                    # Editable caption
+                    edited_caption = st.text_area(
+                        "Edit Caption (optional)",
+                        value=st.session_state.generated_caption,
+                        height=100,
+                        help="You can edit the caption before generating audio"
+                    )
                     
                     st.markdown('</div>', unsafe_allow_html=True)
+                
+                    # Audio generation section - centered button
+                    st.markdown("<br>", unsafe_allow_html=True)
+                    col1, col2, col3 = st.columns([1, 2, 1])
+                    with col2:
+                        if st.button("🎵 Generate Audio Narration", type="secondary", use_container_width=True):
+                            with st.spinner("Generating audio narration..."):
+                                try:
+                                    audio_file = audio_service.text_to_speech(
+                                        edited_caption,
+                                        speed=audio_speed,
+                                        language=audio_language
+                                    )
+                                    
+                                    st.session_state.audio_file = audio_file
+                                    st.session_state.audio_generated = True
+                                    st.session_state.final_caption = edited_caption
+                                    
+                                    st.success("Audio generated successfully!")
+                                    
+                                except Exception as e:
+                                    st.error(f"Error generating audio: {str(e)}")
                     
-                    # Download section
-                    st.subheader("💾 Download Options")
-                    
-                    col_dl1, col_dl2 = st.columns([1, 1])
-                    
-                    with col_dl1:
-                        # Download caption as text
-                        st.download_button(
-                            label="📄 Download Caption (TXT)",
-                            data=st.session_state.final_caption,
-                            file_name=f"vispio_caption_{int(time.time())}.txt",
-                            mime="text/plain",
-                            use_container_width=True
-                        )
-                    
-                    with col_dl2:
-                        # Download audio
+                    # Audio player and download options
+                    if 'audio_generated' in st.session_state and st.session_state.audio_generated:
+                        st.markdown('<div class="audio-controls">', unsafe_allow_html=True)
+                        
+                        # Audio player
                         with open(st.session_state.audio_file, "rb") as audio_file:
+                            audio_bytes = audio_file.read()
+                            st.audio(audio_bytes, format='audio/wav')
+                        
+                        st.markdown('</div>', unsafe_allow_html=True)
+                        
+                        # Download section
+                        st.subheader("💾 Download Options")
+                        
+                        col_dl1, col_dl2 = st.columns([1, 1])
+                        
+                        with col_dl1:
+                            # Download caption as text
                             st.download_button(
-                                label="🎵 Download Audio (WAV)",
-                                data=audio_file.read(),
-                                file_name=f"vispio_audio_{int(time.time())}.wav",
-                                mime="audio/wav",
+                                label="📄 Download Caption (TXT)",
+                                data=st.session_state.final_caption,
+                                file_name=f"vispio_caption_{int(time.time())}.txt",
+                                mime="text/plain",
                                 use_container_width=True
                             )
-        else:
-            st.info("👆 Please upload an image to start generating captions.")
+                        
+                        with col_dl2:
+                            # Download audio
+                            with open(st.session_state.audio_file, "rb") as audio_file:
+                                st.download_button(
+                                    label="🎵 Download Audio (WAV)",
+                                    data=audio_file.read(),
+                                    file_name=f"vispio_audio_{int(time.time())}.wav",
+                                    mime="audio/wav",
+                                    use_container_width=True
+                                )
+            else:
+                st.info("👆 Please upload an image to start generating captions.")
+    
+    with tab2:
+        # Chatbot interface
+        st.markdown("### 💬 AI Visual Assistant")
+        st.write("Chat with AI about your images or ask general questions about visual content.")
+        
+        # Initialize chat history in session state
+        if 'chat_history' not in st.session_state:
+            st.session_state.chat_history = []
+        
+        # Chat interface
+        chat_col1, chat_col2 = st.columns([1, 1], gap="large")
+        
+        with chat_col1:
+            st.subheader("📷 Image for Chat")
+            
+            # File uploader for chat
+            chat_uploaded_file = st.file_uploader(
+                "Upload an image to chat about",
+                type=['png', 'jpg', 'jpeg', 'gif', 'bmp', 'webp'],
+                help="Upload an image to ask questions about it",
+                key="chat_uploader"
+            )
+            
+            if chat_uploaded_file is not None:
+                try:
+                    chat_uploaded_file.seek(0)
+                    chat_image = Image.open(chat_uploaded_file)
+                    
+                    # Basic validation
+                    if chat_image.size[0] < 10 or chat_image.size[1] < 10:
+                        st.error("Image is too small. Please upload a larger image.")
+                    elif chat_image.size[0] * chat_image.size[1] > 100_000_000:
+                        st.error("Image is too large. Please upload a smaller image.")
+                    else:
+                        # Resize and display image
+                        display_chat_image = resize_image(chat_image, max_size=(400, 300))
+                        st.image(display_chat_image, caption="Chat Image", use_container_width=True)
+                        
+                        # Store image in session state
+                        st.session_state.chat_image = chat_image
+                        st.session_state.chat_image_uploaded = True
+                        
+                        # Generate suggested questions
+                        if st.button("💡 Get Suggested Questions", use_container_width=True):
+                            with st.spinner("Generating suggested questions..."):
+                                try:
+                                    from utils.image_utils import optimize_image_for_api
+                                    img_bytes = optimize_image_for_api(chat_image, max_file_size_mb=2.0)
+                                    suggested_questions = chatbot_service.get_suggested_questions(img_bytes)
+                                    st.session_state.suggested_questions = suggested_questions
+                                except Exception as e:
+                                    st.error(f"Error generating suggestions: {str(e)}")
+                        
+                        # Display suggested questions
+                        if 'suggested_questions' in st.session_state:
+                            st.markdown("**💡 Suggested Questions:**")
+                            for i, question in enumerate(st.session_state.suggested_questions):
+                                if st.button(f"❓ {question}", key=f"suggested_{i}", use_container_width=True):
+                                    st.session_state.current_question = question
+                                    st.rerun()
+                        
+                except Exception as e:
+                    st.error(f"Error processing image: {str(e)}")
+        
+        with chat_col2:
+            st.subheader("💬 Chat Conversation")
+            
+            # Display chat history
+            chat_container = st.container()
+            with chat_container:
+                for message in st.session_state.chat_history[-10:]:  # Show last 10 messages
+                    if message["role"] == "user":
+                        st.markdown(f"**You:** {message['content']}")
+                    else:
+                        st.markdown(f"**AI:** {message['content']}")
+                        st.markdown("---")
+            
+            # Chat input
+            user_question = st.text_input(
+                "Ask a question about the image or anything else:",
+                placeholder="What do you see in this image?",
+                key="chat_input",
+                value=st.session_state.get('current_question', '')
+            )
+            
+            # Clear the current question after setting it
+            if 'current_question' in st.session_state:
+                del st.session_state.current_question
+            
+            col_send, col_clear = st.columns([3, 1])
+            
+            with col_send:
+                if st.button("💬 Send Message", type="primary", use_container_width=True):
+                    if user_question.strip():
+                        with st.spinner("AI is thinking..."):
+                            try:
+                                # Add user message to history
+                                st.session_state.chat_history.append({
+                                    "role": "user",
+                                    "content": user_question
+                                })
+                                
+                                # Generate AI response
+                                if 'chat_image_uploaded' in st.session_state and st.session_state.chat_image_uploaded:
+                                    # Chat with image
+                                    from utils.image_utils import optimize_image_for_api
+                                    img_bytes = optimize_image_for_api(st.session_state.chat_image, max_file_size_mb=2.0)
+                                    response = chatbot_service.chat_with_image(
+                                        img_bytes, 
+                                        user_question,
+                                        st.session_state.chat_history[:-1]  # Exclude the current message
+                                    )
+                                else:
+                                    # Chat without image
+                                    response = chatbot_service.chat_without_image(
+                                        user_question,
+                                        st.session_state.chat_history[:-1]  # Exclude the current message
+                                    )
+                                
+                                # Add AI response to history
+                                st.session_state.chat_history.append({
+                                    "role": "assistant",
+                                    "content": response
+                                })
+                                
+                                st.rerun()
+                                
+                            except Exception as e:
+                                st.error(f"Error getting AI response: {str(e)}")
+                    else:
+                        st.warning("Please enter a question or message.")
+            
+            with col_clear:
+                if st.button("🗑️ Clear Chat", use_container_width=True):
+                    st.session_state.chat_history = []
+                    if 'suggested_questions' in st.session_state:
+                        del st.session_state.suggested_questions
+                    st.rerun()
     
     # Footer with About Us button
     st.markdown("---")
@@ -576,5 +721,9 @@ if __name__ == "__main__":
         st.session_state.settings_open = False
     if 'show_about' not in st.session_state:
         st.session_state.show_about = False
+    if 'chat_history' not in st.session_state:
+        st.session_state.chat_history = []
+    if 'chat_image_uploaded' not in st.session_state:
+        st.session_state.chat_image_uploaded = False
     
     main()

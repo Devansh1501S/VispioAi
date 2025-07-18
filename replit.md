@@ -26,6 +26,7 @@ The application follows a modular service-oriented architecture with clear separ
   - Streamlit page configuration and custom styling
   - Service initialization with caching
   - User interface layout and interaction handling
+  - Tab-based navigation for image captioning and chatbot features
 - **Design Decision**: Uses Streamlit's caching mechanism to initialize services once for performance optimization
 
 ### 2. Gemini Service (`services/gemini_service.py`)
@@ -45,7 +46,17 @@ The application follows a modular service-oriented architecture with clear separ
   - Pygame-based audio playback
 - **Design Decision**: Uses gTTS for cloud-based TTS with pygame for local playback, providing flexibility and quality
 
-### 4. Image Utilities (`utils/image_utils.py`)
+### 4. Chatbot Service (`services/chatbot_service.py`)
+- **Purpose**: Interactive AI conversations about images and visual content
+- **Key Features**:
+  - Image-based conversations using Gemini Vision API
+  - General chat capabilities without image context
+  - Conversation history management
+  - Suggested question generation for uploaded images
+  - Context-aware responses with conversation continuity
+- **Design Decision**: Separate service for chatbot functionality enabling interactive dialogue about visual content
+
+### 5. Image Utilities (`utils/image_utils.py`)
 - **Purpose**: Image validation and processing
 - **Key Features**:
   - Comprehensive image validation (size, format, dimensions)
@@ -55,12 +66,21 @@ The application follows a modular service-oriented architecture with clear separ
 
 ## Data Flow
 
+### Image Captioning Flow
 1. **Image Upload**: User uploads image through Streamlit interface
 2. **Validation**: Image is validated for format, size, and quality using PIL
 3. **Processing**: Valid images are processed and sent to Gemini Vision API
 4. **Caption Generation**: Gemini API analyzes image and generates caption based on selected style
 5. **Audio Conversion**: Generated caption is optionally converted to speech using gTTS
 6. **Output**: Results are displayed in the web interface with optional audio playback
+
+### Chatbot Interaction Flow
+1. **Image Upload**: User uploads image to chat tab (optional)
+2. **Question Input**: User asks questions about the image or general visual content
+3. **Context Building**: System maintains conversation history for context
+4. **AI Processing**: Gemini API processes question with image context (if available)
+5. **Response Generation**: AI generates conversational response based on visual understanding
+6. **Conversation Display**: Chat history is updated and displayed with user and AI messages
 
 ## External Dependencies
 
