@@ -96,13 +96,17 @@ if not import_success:
         
         st.stop()
 
+# Try to import dotenv, but don't fail if it's not available
 try:
     from dotenv import load_dotenv
     load_dotenv()
     st.success("✅ python-dotenv imported successfully")
 except ImportError as e:
-    st.error(f"❌ Failed to import python-dotenv: {e}")
-    st.stop()
+    st.warning(f"⚠️ python-dotenv not available: {e}")
+    st.info("Continuing without .env file support - using environment variables directly")
+    # Define a dummy load_dotenv function
+    def load_dotenv():
+        pass
 
 try:
     # Import services using the factory
