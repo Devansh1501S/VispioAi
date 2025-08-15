@@ -3,3 +3,4 @@ build-essential
 libffi-dev
 libssl-dev
 ffmpeg
+libasound2-dev
