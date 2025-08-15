@@ -37,10 +37,23 @@ except ImportError as e:
     st.error(f"Python path: {sys.executable}")
     st.error(f"Available packages: {[pkg for pkg in sys.modules.keys() if 'google' in pkg]}")
     
-    st.error("❌ google-generativeai package is not installed")
-    st.error("Please ensure google-generativeai==0.8.5 is in requirements.txt")
-    st.error("Streamlit Cloud should install it automatically during deployment")
-    st.stop()
+    # Try alternative import methods
+    st.warning("🔄 Trying alternative import methods...")
+    
+    try:
+        # Try importing from google.ai
+        from google.ai import generativeai as genai
+        st.success("✅ google.ai.generativeai imported successfully")
+    except ImportError:
+        try:
+            # Try importing directly
+            import generativeai as genai
+            st.success("✅ generativeai imported successfully")
+        except ImportError:
+            st.error("❌ All import methods failed")
+            st.error("Please ensure google-generativeai>=0.8.5 is in requirements.txt")
+            st.error("Streamlit Cloud should install it automatically during deployment")
+            st.stop()
 
 try:
     from dotenv import load_dotenv
