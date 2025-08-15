@@ -1,4 +1,4 @@
-# Streamlit Cloud compatible requirements
+# Streamlit Cloud compatible requirements - Minimal and stable
 streamlit==1.45.1
 google-generativeai==0.8.5
 google-auth==2.40.1
@@ -9,4 +9,3 @@ Pillow==10.3.0
 gtts==2.5.4
 pygame==2.6.0
 numpy==1.26.4
-requests>=2.28.0
