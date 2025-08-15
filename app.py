@@ -25,27 +25,23 @@ st.set_page_config(
     }
 )
 
-# Initialize services using factory pattern
-@st.cache_resource
+# Initialize services - NO CACHING to avoid import issues
 def initialize_services():
-    """Initialize all services with proper error handling and method verification."""
+    """Initialize all services fresh every time."""
     try:
-        from services import ServiceFactory
+        # Direct imports - no factory pattern to avoid caching issues
+        from services.gemini_service import GeminiService
+        from services.audio_service import AudioService
+        from services.chatbot_service import ChatbotService
         
-        # Verify services before returning
-        if not ServiceFactory.verify_services():
-            raise RuntimeError("Service verification failed")
-        
-        gemini_service = ServiceFactory.get_gemini_service()
-        audio_service = ServiceFactory.get_audio_service()
-        chatbot_service = ServiceFactory.get_chatbot_service()
+        gemini_service = GeminiService()
+        audio_service = AudioService()
+        chatbot_service = ChatbotService()
         
         return gemini_service, audio_service, chatbot_service
         
     except Exception as e:
         st.error(f"Service initialization failed: {str(e)}")
-        # Clear cache and retry once
-        st.cache_resource.clear()
         raise e
 
 # Custom CSS for enhanced styling
@@ -301,10 +297,8 @@ def main():
     except Exception as e:
         st.error(f"Failed to initialize services: {str(e)}")
         
-        # Add cache clear button for debugging
-        if st.button("🔄 Clear Cache and Retry"):
-            st.cache_resource.clear()
-            st.rerun()
+        # Show error message only
+        st.info("Please check your API key configuration.")
         
         st.stop()
     
@@ -343,9 +337,6 @@ def main():
             # Debug options
             with st.expander("🔧 Developer Options"):
                 debug_mode = st.checkbox("Show Debug Info", key="show_debug")
-                if st.button("🔄 Clear Service Cache"):
-                    st.cache_resource.clear()
-                    st.success("Cache cleared! Refresh the page.")
             
             # Close button at bottom of sidebar
             if st.button("✕ Close Settings", type="secondary", use_container_width=True):
