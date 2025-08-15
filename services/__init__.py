@@ -14,13 +14,21 @@ try:
     from .audio_service import AudioService
     AUDIO_AVAILABLE = True
 except ImportError:
-    AUDIO_AVAILABLE = False
+    try:
+        from .audio_fallback import AudioFallbackService as AudioService
+        AUDIO_AVAILABLE = True
+    except ImportError:
+        AUDIO_AVAILABLE = False
 
 try:
     from .chatbot_service import ChatbotService
     CHATBOT_AVAILABLE = True
 except ImportError:
-    CHATBOT_AVAILABLE = False
+    try:
+        from .chatbot_fallback import ChatbotFallbackService as ChatbotService
+        CHATBOT_AVAILABLE = True
+    except ImportError:
+        CHATBOT_AVAILABLE = False
 
 __all__ = ['GeminiService', 'AudioService', 'ChatbotService', 'ServiceFactory', 'GEMINI_AVAILABLE', 'AUDIO_AVAILABLE', 'CHATBOT_AVAILABLE']
 
@@ -45,7 +53,7 @@ class ServiceFactory:
         return cls._instances['gemini']
     
     @classmethod
-    def get_audio_service(cls) -> AudioService:
+    def get_audio_service(cls):
         """Get or create AudioService instance."""
         if not AUDIO_AVAILABLE:
             raise ImportError("AudioService not available")
@@ -54,12 +62,20 @@ class ServiceFactory:
         return cls._instances['audio']
     
     @classmethod
-    def get_chatbot_service(cls) -> ChatbotService:
+    def get_chatbot_service(cls):
         """Get or create ChatbotService instance."""
         if not CHATBOT_AVAILABLE:
             raise ImportError("ChatbotService not available")
         if 'chatbot' not in cls._instances:
-            cls._instances['chatbot'] = ChatbotService()
+            if GEMINI_AVAILABLE:
+                cls._instances['chatbot'] = ChatbotService()
+            else:
+                # Use fallback chatbot service with API key from environment
+                import os
+                api_key = os.environ.get("GEMINI_API_KEY")
+                if not api_key:
+                    raise ValueError("GEMINI_API_KEY not found in environment")
+                cls._instances['chatbot'] = ChatbotService(api_key)
         return cls._instances['chatbot']
     
     @classmethod
