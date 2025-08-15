@@ -1,4 +1,4 @@
-# Cache bust: 2024-08-15-19:30 - Fixed Streamlit cache issues and version conflicts
+# Cache bust: 2024-08-15-20:00 - Fixed 'value too large' error and simplified cache busting
 # Core Streamlit Application
 streamlit==1.45.1
 
