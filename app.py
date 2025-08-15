@@ -28,7 +28,7 @@ import os
 # st.info(f"Python 3.12 compatibility: ✅ Stable")
 
 # SKIP google-generativeai entirely - use only fallback service
-st.info("🔄 Using HTTP-based Gemini service (bypassing google-generativeai)")
+# st.info("🔄 Using HTTP-based Gemini service (bypassing google-generativeai)")
 
 # Try to import dotenv, but don't fail if it's not available
 try:
@@ -325,7 +325,8 @@ def main():
     model = None
     if gemini_service is not None: # Check if gemini_service is initialized
         try:
-            # model = initialize_gemini() # This line is no longer needed
+            # model = initialize_gemini() # This line is no longer needed 
+            pass
             # st.success("✅ HTTP-based Gemini service connected successfully!")
         except Exception as e:
             st.warning(f"⚠️ HTTP-based Gemini initialization warning: {e}")
