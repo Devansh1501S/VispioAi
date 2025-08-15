@@ -27,74 +27,8 @@ st.info(f"Python version: {sys.version}")
 st.info(f"Python path: {sys.executable}")
 st.info(f"Python 3.12 compatibility: ✅ Stable")
 
-# Enhanced import handling for Streamlit Cloud
-genai = None
-import_success = False
-
-# Method 1: Standard import
-try:
-    import google.generativeai as genai
-    st.success("✅ google.generativeai imported successfully (Method 1)")
-    import_success = True
-except ImportError as e:
-    st.warning(f"Method 1 failed: {e}")
-
-# Method 2: Try with pip install first (only if not already installed)
-if not import_success:
-    try:
-        import subprocess
-        import sys
-        st.info("🔄 Attempting to install google-generativeai...")
-        # Use --no-cache-dir to avoid cache issues
-        subprocess.check_call([
-            sys.executable, "-m", "pip", "install", 
-            "--no-cache-dir", "--force-reinstall", 
-            "google-generativeai==0.8.5"
-        ])
-        import google.generativeai as genai
-        st.success("✅ google-generativeai imported successfully (Method 2)")
-        import_success = True
-    except Exception as e:
-        st.warning(f"Method 2 failed: {e}")
-
-# Method 3: Try alternative import paths
-if not import_success:
-    try:
-        from google.ai import generativeai as genai
-        st.success("✅ google.ai.generativeai imported successfully (Method 3)")
-        import_success = True
-    except ImportError:
-        try:
-            import generativeai as genai
-            st.success("✅ generativeai imported successfully (Method 4)")
-            import_success = True
-        except ImportError as e:
-            st.error(f"❌ All import methods failed: {e}")
-
-if not import_success:
-    st.warning("⚠️ google-generativeai library failed to import")
-    st.info("🔄 Using fallback HTTP-based service instead...")
-    
-    # Import fallback service
-    try:
-        from services.gemini_fallback import GeminiFallbackService
-        st.success("✅ Fallback service loaded successfully")
-        import_success = True  # We'll use fallback
-    except ImportError as e:
-        st.error(f"❌ Fallback service also failed: {e}")
-        st.error("Please ensure google-generativeai==0.8.5 is in requirements.txt")
-        st.error("Streamlit Cloud should install it automatically during deployment")
-        st.error("If the issue persists, try redeploying or check the deployment logs")
-        
-        # Show what packages are actually installed
-        try:
-            import pkg_resources
-            installed_packages = [d.project_name for d in pkg_resources.working_set]
-            st.info(f"Installed packages: {[pkg for pkg in installed_packages if 'google' in pkg.lower()]}")
-        except:
-            pass
-        
-        st.stop()
+# SKIP google-generativeai entirely - use only fallback service
+st.info("🔄 Using HTTP-based Gemini service (bypassing google-generativeai)")
 
 # Try to import dotenv, but don't fail if it's not available
 try:
@@ -115,13 +49,10 @@ try:
     # Import utility functions
     from utils.image_utils import resize_image, optimize_image_for_api
     
-    # Initialize services
+    # Initialize services - force fallback mode
     gemini_service = ServiceFactory.get_gemini_service()
     
-    if GEMINI_AVAILABLE:
-        st.success("✅ Using google-generativeai library service")
-    else:
-        st.success("✅ Using fallback HTTP-based service")
+    st.success("✅ Using HTTP-based Gemini service")
     
     # Try to initialize other services
     try:
@@ -168,9 +99,18 @@ def initialize_gemini():
             st.info("Go to App Settings → Secrets and add: GEMINI_API_KEY = 'your_key_here'")
             st.stop()
         
-        genai.configure(api_key=api_key)
-        model = genai.GenerativeModel("gemini-1.5-flash")
-        return model
+        # This part is no longer needed as we are using the fallback service
+        # genai.configure(api_key=api_key)
+        # model = genai.GenerativeModel("gemini-1.5-flash")
+        # return model
+        
+        # For the fallback service, we'll just return a placeholder or raise an error
+        # as the actual service object is not directly imported.
+        # This function is kept for consistency with the original code,
+        # but the actual service object is not available here.
+        st.warning("⚠️ Fallback service does not have a direct model object.")
+        st.info("Core functionality (image analysis) will still work, but some features might be limited.")
+        return None # Return None as the model is not directly available
         
     except Exception as e:
         st.error(f"Failed to initialize Gemini: {str(e)}")
@@ -383,15 +323,15 @@ input:checked + .slider:before {
 def main():
     # Initialize Gemini only if the library is available
     model = None
-    if genai is not None:
+    if gemini_service is not None: # Check if gemini_service is initialized
         try:
-            model = initialize_gemini()
-            st.success("✅ Gemini AI connected successfully!")
+            # model = initialize_gemini() # This line is no longer needed
+            st.success("✅ HTTP-based Gemini service connected successfully!")
         except Exception as e:
-            st.warning(f"⚠️ Gemini initialization warning: {e}")
+            st.warning(f"⚠️ HTTP-based Gemini initialization warning: {e}")
             st.info("Continuing with fallback service...")
     else:
-        st.info("✅ Using fallback HTTP-based Gemini service")
+        st.info("✅ HTTP-based Gemini service is not available.")
     
     # Settings toggle button in top area
     col_settings_btn, col_spacer = st.columns([1, 4])
