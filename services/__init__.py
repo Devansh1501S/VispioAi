@@ -36,6 +36,28 @@ class ServiceFactory:
     """Factory class for creating and managing services."""
     
     _instances = {}
+
+    @staticmethod
+    def _get_gemini_api_key() -> str:
+        """Resolve the Gemini API key from environment or Streamlit secrets.
+        Returns the API key string if found; raises ValueError otherwise.
+        """
+        import os
+        api_key = os.environ.get("GEMINI_API_KEY")
+        if api_key:
+            return api_key
+
+        # Try Streamlit secrets if available (on Streamlit Cloud)
+        try:
+            import streamlit as st  # Imported lazily to avoid hard dependency
+            if hasattr(st, "secrets") and st.secrets is not None:
+                if "GEMINI_API_KEY" in st.secrets and st.secrets["GEMINI_API_KEY"]:
+                    return str(st.secrets["GEMINI_API_KEY"])  # Ensure string type
+        except Exception:
+            # Ignore import or access errors; we'll raise a clear error below
+            pass
+
+        raise ValueError("GEMINI_API_KEY not found in environment or Streamlit secrets")
     
     @classmethod
     def get_gemini_service(cls) -> GeminiService:
@@ -44,11 +66,8 @@ class ServiceFactory:
             if GEMINI_AVAILABLE:
                 cls._instances['gemini'] = GeminiService()
             else:
-                # Use fallback service with API key from environment
-                import os
-                api_key = os.environ.get("GEMINI_API_KEY")
-                if not api_key:
-                    raise ValueError("GEMINI_API_KEY not found in environment")
+                # Use fallback service with API key from env or secrets
+                api_key = cls._get_gemini_api_key()
                 cls._instances['gemini'] = GeminiService(api_key)
         return cls._instances['gemini']
     
@@ -70,11 +89,8 @@ class ServiceFactory:
             if GEMINI_AVAILABLE:
                 cls._instances['chatbot'] = ChatbotService()
             else:
-                # Use fallback chatbot service with API key from environment
-                import os
-                api_key = os.environ.get("GEMINI_API_KEY")
-                if not api_key:
-                    raise ValueError("GEMINI_API_KEY not found in environment")
+                # Use fallback chatbot service with API key from env or secrets
+                api_key = cls._get_gemini_api_key()
                 cls._instances['chatbot'] = ChatbotService(api_key)
         return cls._instances['chatbot']
     
