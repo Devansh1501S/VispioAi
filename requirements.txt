@@ -1,35 +1,55 @@
 # Core Streamlit Application
-streamlit>=1.45.1
+streamlit==1.45.1
 
-# Google Gemini AI API
-google-generativeai>=0.8.5
+# Google Gemini AI API - Fixed versions for Streamlit Cloud
+google-generativeai==0.8.5
+google-ai-generativelanguage==0.6.15
+google-api-core==2.25.0
+google-auth==2.40.1
+googleapis-common-protos==1.70.0
+grpcio==1.71.0
+grpcio-status==1.71.0
+proto-plus==1.26.1
+protobuf==5.29.4
 
 # Text-to-Speech and Audio Processing
-gtts>=2.5.4
-pydub>=0.25.1
-pygame>=2.6.0
+gtts==2.5.4
+pydub==0.25.1
+pygame==2.6.0
 
 # Image Processing and Computer Vision
-Pillow>=10.3.0
+Pillow==10.3.0
 
 # Environment Variables Management
-python-dotenv>=1.0.1
+python-dotenv==1.0.1
 
 # HTTP Requests (for API calls)
-requests>=2.31.0
+requests==2.31.0
+urllib3==2.2.1
+certifi==2024.2.2
+charset-normalizer==3.3.2
+idna==3.7
 
 # Data Processing and Analysis
-numpy>=1.26.4
+numpy==1.26.4
 
 # Additional Core Dependencies
-typing-extensions>=4.13.0
-packaging>=24.0
+typing-extensions==4.13.2
+packaging==24.0
 
-# Development and Testing (optional but recommended)
-# Uncomment for development environment
-# pytest>=7.0.0
-# black>=23.0.0
-# flake8>=6.0.0
-
-# Audio Processing System Dependencies
-# Note: ffmpeg and libsndfile1 are handled by packages.txt for Streamlit Cloud
+# Streamlit Dependencies
+altair==5.5.0
+blinker==1.8.2
+cachetools==5.5.2
+click==8.1.7
+markdown-it-py==3.0.0
+pandas==2.2.2
+pyarrow==19.0.1
+pydeck==0.9.1
+python-dateutil==2.9.0.post0
+rich==13.7.1
+tenacity==8.4.2
+toml==0.10.2
+tornado==6.4
+tzlocal==5.3.1
+watchdog==6.0.0
