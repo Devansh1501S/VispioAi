@@ -601,26 +601,26 @@ def main():
                     st.markdown("<br>", unsafe_allow_html=True)
                     col1, col2, col3 = st.columns([1, 2, 1])
                     with col2:
-                                                 if st.button("🎵 Generate Audio Narration", type="secondary", use_container_width=True):
-                             if audio_service is None:
-                                 st.error("Audio service not available. Please check your deployment.")
-                             else:
-                                 with st.spinner("Generating audio narration..."):
-                                     try:
-                                         audio_file = audio_service.text_to_speech(
-                                             edited_caption,
-                                             speed=audio_speed,
-                                             language=audio_language
-                                         )
-                                         
-                                         st.session_state.audio_file = audio_file
-                                         st.session_state.audio_generated = True
-                                         st.session_state.final_caption = edited_caption
-                                         
-                                         st.success("Audio generated successfully!")
-                                         
-                                     except Exception as e:
-                                         st.error(f"Error generating audio: {str(e)}")
+                        if st.button("🎵 Generate Audio Narration", type="secondary", use_container_width=True):
+                            if audio_service is None:
+                                st.error("Audio service not available. Please check your deployment.")
+                            else:
+                                with st.spinner("Generating audio narration..."):
+                                    try:
+                                        audio_file = audio_service.text_to_speech(
+                                            edited_caption,
+                                            speed=audio_speed,
+                                            language=audio_language
+                                        )
+                                        
+                                        st.session_state.audio_file = audio_file
+                                        st.session_state.audio_generated = True
+                                        st.session_state.final_caption = edited_caption
+                                        
+                                        st.success("Audio generated successfully!")
+                                        
+                                    except Exception as e:
+                                        st.error(f"Error generating audio: {str(e)}")
                     
                     # Audio player and download options
                     if 'audio_generated' in st.session_state and st.session_state.audio_generated:
@@ -712,17 +712,17 @@ def main():
                         st.session_state.chat_image_uploaded = True
                         
                         # Generate suggested questions
-                                                 if st.button("💡 Get Suggested Questions", use_container_width=True):
-                             if chatbot_service is None:
-                                 st.error("Chatbot service not available. Please check your deployment.")
-                             else:
-                                 with st.spinner("Generating suggested questions..."):
-                                     try:
-                                         img_bytes = optimize_image_for_api(chat_image, max_file_size_mb=2.0)
-                                         suggested_questions = chatbot_service.get_suggested_questions(img_bytes)
-                                         st.session_state.suggested_questions = suggested_questions
-                                     except Exception as e:
-                                         st.error(f"Error generating suggestions: {str(e)}")
+                        if st.button("💡 Get Suggested Questions", use_container_width=True):
+                            if chatbot_service is None:
+                                st.error("Chatbot service not available. Please check your deployment.")
+                            else:
+                                with st.spinner("Generating suggested questions..."):
+                                    try:
+                                        img_bytes = optimize_image_for_api(chat_image, max_file_size_mb=2.0)
+                                        suggested_questions = chatbot_service.get_suggested_questions(img_bytes)
+                                        st.session_state.suggested_questions = suggested_questions
+                                    except Exception as e:
+                                        st.error(f"Error generating suggestions: {str(e)}")
                         
                         # Display suggested questions
                         if 'suggested_questions' in st.session_state:
@@ -773,38 +773,38 @@ def main():
                                     "content": user_question
                                 })
                                 
-                                                                 # Generate AI response with intelligent routing
-                                 if chatbot_service is None:
-                                     response = "Chatbot service not available. Please check your deployment."
-                                 elif 'chat_image_uploaded' in st.session_state and st.session_state.chat_image_uploaded:
-                                     # Chat with image - detect question type for specialized analysis
-                                     img_bytes = optimize_image_for_api(st.session_state.chat_image, max_file_size_mb=2.0)
-                                     
-                                     # Detect if this is a location or product question
-                                     location_keywords = ['where', 'location', 'place', 'address', 'city', 'country', 'landmark', 'building', 'street']
-                                     product_keywords = ['product', 'brand', 'price', 'buy', 'purchase', 'model', 'specification', 'what is this', 'identify']
-                                     
-                                     question_lower = user_question.lower()
-                                     
-                                     if any(keyword in question_lower for keyword in location_keywords):
-                                         # Use specialized location analysis
-                                         response = chatbot_service.analyze_location_context(img_bytes, user_question)
-                                     elif any(keyword in question_lower for keyword in product_keywords):
-                                         # Use specialized product analysis
-                                         response = chatbot_service.analyze_product_context(img_bytes, user_question)
-                                     else:
-                                         # Use general chat with image
-                                         response = chatbot_service.chat_with_image(
-                                             img_bytes, 
-                                             user_question,
-                                             st.session_state.chat_history[:-1]  # Exclude the current message
-                                         )
-                                 else:
-                                     # Chat without image
-                                     response = chatbot_service.chat_without_image(
-                                         user_question,
-                                         st.session_state.chat_history[:-1]  # Exclude the current message
-                                     )
+                                # Generate AI response with intelligent routing
+                                if chatbot_service is None:
+                                    response = "Chatbot service not available. Please check your deployment."
+                                elif 'chat_image_uploaded' in st.session_state and st.session_state.chat_image_uploaded:
+                                    # Chat with image - detect question type for specialized analysis
+                                    img_bytes = optimize_image_for_api(st.session_state.chat_image, max_file_size_mb=2.0)
+                                    
+                                    # Detect if this is a location or product question
+                                    location_keywords = ['where', 'location', 'place', 'address', 'city', 'country', 'landmark', 'building', 'street']
+                                    product_keywords = ['product', 'brand', 'price', 'buy', 'purchase', 'model', 'specification', 'what is this', 'identify']
+                                    
+                                    question_lower = user_question.lower()
+                                    
+                                    if any(keyword in question_lower for keyword in location_keywords):
+                                        # Use specialized location analysis
+                                        response = chatbot_service.analyze_location_context(img_bytes, user_question)
+                                    elif any(keyword in question_lower for keyword in product_keywords):
+                                        # Use specialized product analysis
+                                        response = chatbot_service.analyze_product_context(img_bytes, user_question)
+                                    else:
+                                        # Use general chat with image
+                                        response = chatbot_service.chat_with_image(
+                                            img_bytes, 
+                                            user_question,
+                                            st.session_state.chat_history[:-1]  # Exclude the current message
+                                        )
+                                else:
+                                    # Chat without image
+                                    response = chatbot_service.chat_without_image(
+                                        user_question,
+                                        st.session_state.chat_history[:-1]  # Exclude the current message
+                                    )
                                 
                                 # Add AI response to history
                                 st.session_state.chat_history.append({
