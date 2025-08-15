@@ -3,7 +3,6 @@ import os
 import io
 from PIL import Image
 import time 
-st.set_option('server.fileWatcherType', 'none') 
 
 # Cache busting for Streamlit Cloud deployment
 def clear_all_caches():
