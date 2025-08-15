@@ -1,3 +1,6 @@
+# Force fresh deployment - change this version to force Streamlit Cloud cache bust
+DEPLOYMENT_VERSION = "1.0.4559"
+
 import streamlit as st
 import io
 import os
