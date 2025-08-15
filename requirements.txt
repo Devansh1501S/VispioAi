@@ -1,8 +1,8 @@
-# Cache bust: 2024-08-15-20:15 - Fixed google-generativeai import issue
+# Cache bust: 2024-08-15-20:20 - Fixed package installation order
 # Core Streamlit Application
 streamlit==1.45.1
 
-# Google Gemini AI API - Fixed versions for Streamlit Cloud
+# Google Gemini AI API - Core dependencies first
 google-generativeai==0.8.5
 google-ai-generativelanguage==0.6.15
 google-api-core==2.25.0
@@ -12,14 +12,6 @@ grpcio==1.71.0
 grpcio-status==1.71.0
 proto-plus==1.26.1
 protobuf==5.29.4
-
-# Text-to-Speech and Audio Processing
-gtts==2.5.4
-pydub==0.25.1
-pygame==2.6.0
-
-# Image Processing and Computer Vision
-Pillow==10.3.0
 
 # Environment Variables Management
 python-dotenv==1.0.1
@@ -33,6 +25,14 @@ idna==3.7
 
 # Data Processing and Analysis
 numpy==1.26.4
+
+# Image Processing and Computer Vision
+Pillow==10.3.0
+
+# Text-to-Speech and Audio Processing
+gtts==2.5.4
+pydub==0.25.1
+pygame==2.6.0
 
 # Additional Core Dependencies
 typing-extensions==4.13.2
