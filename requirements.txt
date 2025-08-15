@@ -1,9 +1,9 @@
-# Cache bust: 2024-08-15-20:00 - Fixed 'value too large' error and simplified cache busting
+# Cache bust: 2024-08-15-20:15 - Fixed google-generativeai import issue
 # Core Streamlit Application
 streamlit==1.45.1
 
 # Google Gemini AI API - Fixed versions for Streamlit Cloud
-google-generativeai>=0.8.5
+google-generativeai==0.8.5
 google-ai-generativelanguage==0.6.15
 google-api-core==2.25.0
 google-auth==2.40.1
