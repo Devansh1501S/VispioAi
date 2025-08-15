@@ -1,4 +1,3 @@
-# Streamlit Cloud compatible requirements - Minimal and stable
 streamlit==1.45.1
 google-generativeai==0.8.5
 google-auth==2.40.1
