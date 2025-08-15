@@ -5,6 +5,7 @@ enableXsrfProtection = false
 enableCORS = false
 headless = true
 runOnSave = false
+fileWatcherType = "none" 
 
 [browser]
 # Disable some features that can cause issues
