@@ -1,6 +1,6 @@
 # Cache bust: 2024-08-15-20:35 - Stable versions for Python 3.12
 streamlit==1.45.1
-google-generativeai==0.8.5
+google-generativeai>=0.8.5
 google-ai-generativelanguage==0.6.15
 google-api-core==2.25.0
 google-auth==2.40.1
