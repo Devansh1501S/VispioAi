@@ -1,8 +1,14 @@
-# Cache bust: 2024-08-15-20:30 - Latest google-generativeai version
+# Cache bust: 2024-08-15-20:35 - Stable versions for Python 3.12
 streamlit==1.45.1
-google-generativeai>=0.8.5
-google-ai-generativelanguage>=0.6.0
-google-api-core>=2.25.0
+google-generativeai==0.8.5
+google-ai-generativelanguage==0.6.15
+google-api-core==2.25.0
+google-auth==2.40.1
+googleapis-common-protos==1.70.0
+grpcio==1.71.0
+grpcio-status==1.71.0
+proto-plus==1.26.1
+protobuf==5.29.4
 python-dotenv==1.0.1
 Pillow==10.3.0
 gtts==2.5.4

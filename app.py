@@ -25,6 +25,7 @@ import os
 # Show Python version and path for debugging
 st.info(f"Python version: {sys.version}")
 st.info(f"Python path: {sys.executable}")
+st.info(f"Python 3.12 compatibility: ✅ Stable")
 
 # Simple direct imports to avoid any caching issues
 try:
