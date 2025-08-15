@@ -18,12 +18,35 @@ def clear_all_caches():
 # Force cache clear on every deployment (without caching the function itself)
 clear_all_caches()
 
+# Import debugging and error handling
+import sys
+import os
+
+# Show Python version and path for debugging
+st.info(f"Python version: {sys.version}")
+st.info(f"Python path: {sys.executable}")
+
 # Simple direct imports to avoid any caching issues
 try:
+    # Check if google.generativeai is available
     import google.generativeai as genai
+    st.success("✅ google.generativeai imported successfully")
+except ImportError as e:
+    st.error(f"❌ Failed to import google.generativeai: {e}")
+    st.error("This usually means the package is not installed. Please check requirements.txt")
+    st.error(f"Python path: {sys.executable}")
+    st.error(f"Available packages: {[pkg for pkg in sys.modules.keys() if 'google' in pkg]}")
+    st.stop()
+
+try:
     from dotenv import load_dotenv
     load_dotenv()
-    
+    st.success("✅ python-dotenv imported successfully")
+except ImportError as e:
+    st.error(f"❌ Failed to import python-dotenv: {e}")
+    st.stop()
+
+try:
     # Import services
     from services.gemini_service import GeminiService
     from services.audio_service import AudioService
@@ -37,8 +60,13 @@ try:
     audio_service = AudioService()
     chatbot_service = ChatbotService()
     
+    st.success("✅ All services imported and initialized successfully")
+    
 except ImportError as e:
-    st.error(f"Import error: {e}")
+    st.error(f"❌ Service import error: {e}")
+    st.error("Please check that all service files are present")
+    st.error(f"Current working directory: {os.getcwd()}")
+    st.error(f"Files in current directory: {os.listdir('.')}")
     st.stop()
 
 # Page configuration with cache busting
