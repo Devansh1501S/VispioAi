@@ -3,6 +3,21 @@ import os
 import io
 from PIL import Image
 import time
+import hashlib
+
+# Cache busting for Streamlit Cloud deployment
+@st.cache_resource(ttl=0, max_entries=0)
+def clear_all_caches():
+    """Clear all Streamlit caches to prevent deployment issues."""
+    st.cache_data.clear()
+    st.cache_resource.clear()
+    return True
+
+# Force cache clear on every deployment
+clear_all_caches()
+
+# Add cache busting parameter to prevent stale deployments
+CACHE_BUST = hashlib.md5(str(time.time()).encode()).hexdigest()[:8]
 
 # Simple direct imports to avoid any caching issues
 try:
@@ -27,7 +42,7 @@ except ImportError as e:
     st.error(f"Import error: {e}")
     st.stop()
 
-# Page configuration
+# Page configuration with cache busting
 st.set_page_config(
     page_title="Vispio - AI Image Captioning",
     page_icon="logo.svg",
@@ -39,6 +54,15 @@ st.set_page_config(
         'About': None
     }
 )
+
+# Cache busting for session state
+if 'cache_bust' not in st.session_state:
+    st.session_state.cache_bust = CACHE_BUST
+
+# Force rerun if cache bust changes
+if st.session_state.cache_bust != CACHE_BUST:
+    st.session_state.cache_bust = CACHE_BUST
+    st.rerun()
 
 # Simple service initialization
 def initialize_gemini():
@@ -263,6 +287,11 @@ input:checked + .slider:before {
 """, unsafe_allow_html=True)
 
 def main():
+    # Cache busting header
+    st.markdown(f"""
+    <div style="display: none;" id="cache-bust-{CACHE_BUST}"></div>
+    """, unsafe_allow_html=True)
+    
     # Initialize Gemini
     model = initialize_gemini()
     
