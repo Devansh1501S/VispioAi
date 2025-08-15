@@ -22,10 +22,10 @@ clear_all_caches()
 import sys
 import os
 
-# Show Python version and path for debugging
-st.info(f"Python version: {sys.version}")
-st.info(f"Python path: {sys.executable}")
-st.info(f"Python 3.12 compatibility: ✅ Stable")
+# # Show Python version and path for debugging
+# st.info(f"Python version: {sys.version}")
+# st.info(f"Python path: {sys.executable}")
+# st.info(f"Python 3.12 compatibility: ✅ Stable")
 
 # SKIP google-generativeai entirely - use only fallback service
 st.info("🔄 Using HTTP-based Gemini service (bypassing google-generativeai)")
@@ -36,8 +36,8 @@ try:
     load_dotenv()
     st.success("✅ python-dotenv imported successfully")
 except ImportError as e:
-    st.warning(f"⚠️ python-dotenv not available: {e}")
-    st.info("Continuing without .env file support - using environment variables directly")
+    # st.warning(f"⚠️ python-dotenv not available: {e}")
+    # st.info("Continuing without .env file support - using environment variables directly")
     # Define a dummy load_dotenv function
     def load_dotenv():
         pass
@@ -52,13 +52,13 @@ try:
     # Initialize services - force fallback mode
     gemini_service = ServiceFactory.get_gemini_service()
     
-    st.success("✅ Using HTTP-based Gemini service")
+    # st.success("✅ Using HTTP-based Gemini service")
     
     # Try to initialize other services
     try:
         audio_service = ServiceFactory.get_audio_service()
         chatbot_service = ServiceFactory.get_chatbot_service()
-        st.success("✅ All services imported and initialized successfully")
+        # st.success("✅ All services imported and initialized successfully")
     except ImportError as e:
         st.warning(f"⚠️ Some services not available: {e}")
         st.info("Core functionality (image analysis) will still work")
@@ -326,7 +326,7 @@ def main():
     if gemini_service is not None: # Check if gemini_service is initialized
         try:
             # model = initialize_gemini() # This line is no longer needed
-            st.success("✅ HTTP-based Gemini service connected successfully!")
+            # st.success("✅ HTTP-based Gemini service connected successfully!")
         except Exception as e:
             st.warning(f"⚠️ HTTP-based Gemini initialization warning: {e}")
             st.info("Continuing with fallback service...")
