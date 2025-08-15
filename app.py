@@ -22,13 +22,28 @@ st.set_page_config(
     }
 )
 
-# Initialize services
+# Initialize services using factory pattern
 @st.cache_resource
 def initialize_services():
-    gemini_service = GeminiService()
-    audio_service = AudioService()
-    chatbot_service = ChatbotService()
-    return gemini_service, audio_service, chatbot_service
+    """Initialize all services with proper error handling and method verification."""
+    try:
+        from services import ServiceFactory
+        
+        # Verify services before returning
+        if not ServiceFactory.verify_services():
+            raise RuntimeError("Service verification failed")
+        
+        gemini_service = ServiceFactory.get_gemini_service()
+        audio_service = ServiceFactory.get_audio_service()
+        chatbot_service = ServiceFactory.get_chatbot_service()
+        
+        return gemini_service, audio_service, chatbot_service
+        
+    except Exception as e:
+        st.error(f"Service initialization failed: {str(e)}")
+        # Clear cache and retry once
+        st.cache_resource.clear()
+        raise e
 
 # Custom CSS for enhanced styling
 st.markdown("""
@@ -270,11 +285,24 @@ def main():
             </style>
             """, unsafe_allow_html=True)
     
-    # Initialize services
+    # Initialize services with retry mechanism
     try:
         gemini_service, audio_service, chatbot_service = initialize_services()
+        
+        # Debug info for development
+        if st.session_state.get('show_debug', False):
+            st.sidebar.write("🔧 Debug Info:")
+            st.sidebar.write(f"Gemini methods: {len([m for m in dir(gemini_service) if not m.startswith('_')])}")
+            st.sidebar.write(f"Chatbot methods: {len([m for m in dir(chatbot_service) if not m.startswith('_')])}")
+            
     except Exception as e:
         st.error(f"Failed to initialize services: {str(e)}")
+        
+        # Add cache clear button for debugging
+        if st.button("🔄 Clear Cache and Retry"):
+            st.cache_resource.clear()
+            st.rerun()
+        
         st.stop()
     
     # Settings toggle button in top area
@@ -308,6 +336,13 @@ def main():
                 temperature = st.slider("Creativity", 0.1, 1.0, 0.7, 0.1)
                 
             st.markdown("---")
+            
+            # Debug options
+            with st.expander("🔧 Developer Options"):
+                debug_mode = st.checkbox("Show Debug Info", key="show_debug")
+                if st.button("🔄 Clear Service Cache"):
+                    st.cache_resource.clear()
+                    st.success("Cache cleared! Refresh the page.")
             
             # Close button at bottom of sidebar
             if st.button("✕ Close Settings", type="secondary", use_container_width=True):
@@ -418,41 +453,69 @@ def main():
             st.subheader("📝 Generated Caption")
         
             if 'current_image' in st.session_state and st.session_state.image_uploaded:
-                # Generate caption button
-                if st.button("🚀 Generate Caption", type="primary", use_container_width=True):
-                    with st.spinner("Generating caption..."):
+                # Analysis options
+                analysis_type = st.selectbox(
+                    "Choose Analysis Type",
+                    ["Standard Caption", "Location Analysis", "Product Analysis", "Comprehensive Analysis", "Text Extraction"],
+                    help="Select the type of analysis you want to perform"
+                )
+                
+                # Generate analysis button
+                if st.button("🚀 Generate Analysis", type="primary", use_container_width=True):
+                    with st.spinner(f"Generating {analysis_type.lower()}..."):
                         try:
                             # Optimize image for API
                             from utils.image_utils import optimize_image_for_api
                             img_bytes = optimize_image_for_api(st.session_state.current_image, max_file_size_mb=2.0)
                             
-                            # Generate caption using Gemini
-                            caption = gemini_service.generate_caption(
-                                img_bytes, 
-                                style=caption_style.lower(),
-                                max_tokens=max_tokens,
-                                temperature=temperature
-                            )
+                            # Generate analysis based on selected type
+                            if analysis_type == "Standard Caption":
+                                result = gemini_service.generate_caption(
+                                    img_bytes, 
+                                    style=caption_style.lower(),
+                                    max_tokens=max_tokens,
+                                    temperature=temperature
+                                )
+                            elif analysis_type == "Location Analysis":
+                                location_result = gemini_service.identify_location(img_bytes)
+                                result = location_result.get("location_analysis", "Location analysis failed")
+                            elif analysis_type == "Product Analysis":
+                                product_result = gemini_service.identify_product(img_bytes)
+                                result = product_result.get("product_analysis", "Product analysis failed")
+                            elif analysis_type == "Comprehensive Analysis":
+                                comprehensive_result = gemini_service.comprehensive_analysis(img_bytes)
+                                result = comprehensive_result.get("comprehensive_analysis", "Comprehensive analysis failed")
+                            elif analysis_type == "Text Extraction":
+                                text_result = gemini_service.extract_text_and_details(img_bytes)
+                                result = text_result.get("text_analysis", "Text extraction failed")
+                            else:
+                                result = gemini_service.generate_caption(img_bytes, style=caption_style.lower())
                             
-                            st.session_state.generated_caption = caption
+                            st.session_state.generated_caption = result
                             st.session_state.caption_generated = True
+                            st.session_state.analysis_type = analysis_type
                             
                             # Success message
-                            st.markdown('<div class="success-message">✅ Caption generated successfully!</div>', unsafe_allow_html=True)
+                            st.markdown(f'<div class="success-message">✅ {analysis_type} generated successfully!</div>', unsafe_allow_html=True)
                             
                         except Exception as e:
-                            st.markdown(f'<div class="error-message">❌ Error generating caption: {str(e)}</div>', unsafe_allow_html=True)
+                            st.markdown(f'<div class="error-message">❌ Error generating {analysis_type.lower()}: {str(e)}</div>', unsafe_allow_html=True)
             
-                # Display and edit caption
+                # Display and edit analysis result
                 if 'generated_caption' in st.session_state and st.session_state.caption_generated:
+                    analysis_type_display = st.session_state.get('analysis_type', 'Standard Caption')
+                    
                     st.markdown('<div class="caption-box">', unsafe_allow_html=True)
                     
-                    # Editable caption
+                    # Show analysis type
+                    st.markdown(f"**Analysis Type:** {analysis_type_display}")
+                    
+                    # Editable result
                     edited_caption = st.text_area(
-                        "Edit Caption (optional)",
+                        f"Edit {analysis_type_display} (optional)",
                         value=st.session_state.generated_caption,
-                        height=100,
-                        help="You can edit the caption before generating audio"
+                        height=200 if analysis_type_display != "Standard Caption" else 100,
+                        help="You can edit the analysis result before generating audio"
                     )
                     
                     st.markdown('</div>', unsafe_allow_html=True)
@@ -486,7 +549,10 @@ def main():
                         # Audio player
                         with open(st.session_state.audio_file, "rb") as audio_file:
                             audio_bytes = audio_file.read()
-                            st.audio(audio_bytes, format='audio/wav')
+                            # Detect audio format from file extension
+                            _, ext = os.path.splitext(st.session_state.audio_file)
+                            audio_format = 'audio/mp3' if ext.lower() == '.mp3' else 'audio/wav'
+                            st.audio(audio_bytes, format=audio_format)
                         
                         st.markdown('</div>', unsafe_allow_html=True)
                         
@@ -508,11 +574,16 @@ def main():
                         with col_dl2:
                             # Download audio
                             with open(st.session_state.audio_file, "rb") as audio_file:
+                                # Detect audio format from file extension
+                                _, ext = os.path.splitext(st.session_state.audio_file)
+                                format_name = "MP3" if ext.lower() == '.mp3' else "WAV"
+                                mime_type = "audio/mp3" if ext.lower() == '.mp3' else "audio/wav"
+                                
                                 st.download_button(
-                                    label="🎵 Download Audio (WAV)",
+                                    label=f"🎵 Download Audio ({format_name})",
                                     data=audio_file.read(),
-                                    file_name=f"vispio_audio_{int(time.time())}.wav",
-                                    mime="audio/wav",
+                                    file_name=f"vispio_audio_{int(time.time())}{ext}",
+                                    mime=mime_type,
                                     use_container_width=True
                                 )
             else:
@@ -620,16 +691,31 @@ def main():
                                     "content": user_question
                                 })
                                 
-                                # Generate AI response
+                                # Generate AI response with intelligent routing
                                 if 'chat_image_uploaded' in st.session_state and st.session_state.chat_image_uploaded:
-                                    # Chat with image
+                                    # Chat with image - detect question type for specialized analysis
                                     from utils.image_utils import optimize_image_for_api
                                     img_bytes = optimize_image_for_api(st.session_state.chat_image, max_file_size_mb=2.0)
-                                    response = chatbot_service.chat_with_image(
-                                        img_bytes, 
-                                        user_question,
-                                        st.session_state.chat_history[:-1]  # Exclude the current message
-                                    )
+                                    
+                                    # Detect if this is a location or product question
+                                    location_keywords = ['where', 'location', 'place', 'address', 'city', 'country', 'landmark', 'building', 'street']
+                                    product_keywords = ['product', 'brand', 'price', 'buy', 'purchase', 'model', 'specification', 'what is this', 'identify']
+                                    
+                                    question_lower = user_question.lower()
+                                    
+                                    if any(keyword in question_lower for keyword in location_keywords):
+                                        # Use specialized location analysis
+                                        response = chatbot_service.analyze_location_context(img_bytes, user_question)
+                                    elif any(keyword in question_lower for keyword in product_keywords):
+                                        # Use specialized product analysis
+                                        response = chatbot_service.analyze_product_context(img_bytes, user_question)
+                                    else:
+                                        # Use general chat with image
+                                        response = chatbot_service.chat_with_image(
+                                            img_bytes, 
+                                            user_question,
+                                            st.session_state.chat_history[:-1]  # Exclude the current message
+                                        )
                                 else:
                                     # Chat without image
                                     response = chatbot_service.chat_without_image(

@@ -1,0 +1,23 @@
+# Core Streamlit Application
+streamlit>=1.46.1
+
+# Google Gemini AI API
+google-generativeai>=0.8.0
+
+# Text-to-Speech and Audio Processing
+gtts>=2.5.4
+pydub>=0.25.1
+pygame>=2.6.1
+
+# Image Processing
+Pillow>=10.0.0
+
+# Environment Variables
+python-dotenv>=1.0.0
+
+# Additional Python Standard Library Dependencies
+# (These are usually included but explicitly listed for clarity)
+typing-extensions>=4.0.0
+
+# For audio processing (pydub dependencies)
+# Note: ffmpeg might need to be installed separately on some systems

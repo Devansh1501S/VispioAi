@@ -17,11 +17,28 @@ class AudioService:
         logging.basicConfig(level=logging.INFO)
         self.logger = logging.getLogger(__name__)
         
+        # Check if ffmpeg is available
+        self.ffmpeg_available = self._check_ffmpeg()
+        if not self.ffmpeg_available:
+            self.logger.warning("ffmpeg not found. Audio conversion will be limited to MP3 format.")
+        
         # Initialize pygame mixer for audio playback
         try:
             pygame.mixer.init()
         except Exception as e:
             self.logger.warning(f"Could not initialize pygame mixer: {e}")
+    
+    def _check_ffmpeg(self) -> bool:
+        """Check if ffmpeg is available on the system."""
+        try:
+            import subprocess
+            subprocess.run(['ffmpeg', '-version'], 
+                         stdout=subprocess.DEVNULL, 
+                         stderr=subprocess.DEVNULL, 
+                         check=True)
+            return True
+        except (subprocess.CalledProcessError, FileNotFoundError):
+            return False
     
     def text_to_speech(
         self, 
@@ -58,36 +75,71 @@ class AudioService:
                 slow=False  # We'll handle speed adjustment separately
             )
             
+            # Generate unique filename using timestamp and hash
+            import time
+            import hashlib
+            timestamp = int(time.time() * 1000)
+            text_hash = hashlib.md5(text.encode()).hexdigest()[:8]
+            
             # Save to temporary MP3 file first
-            temp_mp3_path = os.path.join(self.temp_dir, f"temp_audio_{id(text)}.mp3")
+            temp_mp3_path = os.path.join(self.temp_dir, f"temp_audio_{timestamp}_{text_hash}.mp3")
+            
+            # Ensure temp directory exists
+            os.makedirs(self.temp_dir, exist_ok=True)
+            
+            self.logger.info(f"Saving TTS to: {temp_mp3_path}")
             tts.save(temp_mp3_path)
             
-            # Load with pydub for speed adjustment and format conversion
-            audio = AudioSegment.from_mp3(temp_mp3_path)
+            # Verify the MP3 file was created
+            if not os.path.exists(temp_mp3_path):
+                raise FileNotFoundError(f"TTS file was not created: {temp_mp3_path}")
             
-            # Adjust speed if needed
-            if speed != 1.0:
-                # Change speed without changing pitch
-                audio = audio.speedup(playback_speed=speed)
+            # For Windows compatibility, if pydub/ffmpeg fails, return MP3 directly
+            if output_format.lower() == "mp3":
+                self.logger.info(f"Returning MP3 file directly: {temp_mp3_path}")
+                return temp_mp3_path
             
-            # Convert to requested format
-            output_path = os.path.join(self.temp_dir, f"audio_{id(text)}.{output_format}")
-            
-            if output_format.lower() == "wav":
-                audio.export(output_path, format="wav")
-            elif output_format.lower() == "mp3":
-                audio.export(output_path, format="mp3")
-            else:
-                raise ValueError(f"Unsupported audio format: {output_format}")
-            
-            # Clean up temporary MP3 file
+            # Try to convert to WAV using pydub
             try:
-                os.remove(temp_mp3_path)
-            except:
-                pass
-            
-            self.logger.info(f"Audio generated successfully: {output_path}")
-            return output_path
+                # Load with pydub for speed adjustment and format conversion
+                audio = AudioSegment.from_mp3(temp_mp3_path)
+                
+                # Adjust speed if needed
+                if speed != 1.0:
+                    # Change speed without changing pitch
+                    audio = audio.speedup(playback_speed=speed)
+                
+                # Convert to requested format
+                output_path = os.path.join(self.temp_dir, f"audio_{timestamp}_{text_hash}.{output_format}")
+                
+                if output_format.lower() == "wav":
+                    audio.export(output_path, format="wav")
+                else:
+                    raise ValueError(f"Unsupported audio format: {output_format}")
+                
+                # Clean up temporary MP3 file
+                try:
+                    os.remove(temp_mp3_path)
+                except:
+                    pass
+                
+                self.logger.info(f"Audio converted successfully: {output_path}")
+                return output_path
+                
+            except Exception as conversion_error:
+                self.logger.warning(f"Audio conversion failed: {conversion_error}")
+                self.logger.info("Falling back to MP3 format")
+                
+                # If conversion fails, return the MP3 file
+                # Rename it to have the correct extension for consistency
+                fallback_path = os.path.join(self.temp_dir, f"audio_{timestamp}_{text_hash}.mp3")
+                if temp_mp3_path != fallback_path:
+                    try:
+                        os.rename(temp_mp3_path, fallback_path)
+                    except:
+                        fallback_path = temp_mp3_path
+                
+                return fallback_path
             
         except Exception as e:
             self.logger.error(f"Error in text-to-speech conversion: {str(e)}")
