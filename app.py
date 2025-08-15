@@ -27,34 +27,51 @@ st.info(f"Python version: {sys.version}")
 st.info(f"Python path: {sys.executable}")
 st.info(f"Python 3.12 compatibility: ✅ Stable")
 
-# Simple direct imports to avoid any caching issues
+# Enhanced import handling for Streamlit Cloud
+genai = None
+import_success = False
+
+# Method 1: Standard import
 try:
-    # Check if google.generativeai is available
     import google.generativeai as genai
-    st.success("✅ google.generativeai imported successfully")
+    st.success("✅ google.generativeai imported successfully (Method 1)")
+    import_success = True
 except ImportError as e:
-    st.error(f"❌ Failed to import google.generativeai: {e}")
-    st.error("This usually means the package is not installed. Please check requirements.txt")
-    st.error(f"Python path: {sys.executable}")
-    st.error(f"Available packages: {[pkg for pkg in sys.modules.keys() if 'google' in pkg]}")
-    
-    # Try alternative import methods
-    st.warning("🔄 Trying alternative import methods...")
-    
+    st.warning(f"Method 1 failed: {e}")
+
+# Method 2: Try with pip install first
+if not import_success:
     try:
-        # Try importing from google.ai
+        import subprocess
+        import sys
+        st.info("🔄 Attempting to install google-generativeai...")
+        subprocess.check_call([sys.executable, "-m", "pip", "install", "google-generativeai==0.8.5"])
+        import google.generativeai as genai
+        st.success("✅ google.generativeai imported successfully (Method 2)")
+        import_success = True
+    except Exception as e:
+        st.warning(f"Method 2 failed: {e}")
+
+# Method 3: Try alternative import paths
+if not import_success:
+    try:
         from google.ai import generativeai as genai
-        st.success("✅ google.ai.generativeai imported successfully")
+        st.success("✅ google.ai.generativeai imported successfully (Method 3)")
+        import_success = True
     except ImportError:
         try:
-            # Try importing directly
             import generativeai as genai
-            st.success("✅ generativeai imported successfully")
-        except ImportError:
-            st.error("❌ All import methods failed")
-            st.error("Please ensure google-generativeai>=0.8.5 is in requirements.txt")
-            st.error("Streamlit Cloud should install it automatically during deployment")
-            st.stop()
+            st.success("✅ generativeai imported successfully (Method 4)")
+            import_success = True
+        except ImportError as e:
+            st.error(f"❌ All import methods failed: {e}")
+
+if not import_success:
+    st.error("❌ Failed to import google-generativeai")
+    st.error("Please ensure google-generativeai==0.8.5 is in requirements.txt")
+    st.error("Streamlit Cloud should install it automatically during deployment")
+    st.error("If the issue persists, try redeploying or check the deployment logs")
+    st.stop()
 
 try:
     from dotenv import load_dotenv
