@@ -1,16 +1,31 @@
-# Force fresh deployment - change this version to force Streamlit Cloud cache bust
-DEPLOYMENT_VERSION = "1.0.4559"
-
 import streamlit as st
-import io
 import os
-import base64
+import io
 from PIL import Image
 import time
-from services.gemini_service import GeminiService
-from services.audio_service import AudioService
-from services.chatbot_service import ChatbotService
-from utils.image_utils import validate_image, resize_image
+
+# Simple direct imports to avoid any caching issues
+try:
+    import google.generativeai as genai
+    from dotenv import load_dotenv
+    load_dotenv()
+    
+    # Import services
+    from services.gemini_service import GeminiService
+    from services.audio_service import AudioService
+    from services.chatbot_service import ChatbotService
+    
+    # Import utility functions
+    from utils.image_utils import resize_image, optimize_image_for_api
+    
+    # Initialize services
+    gemini_service = GeminiService()
+    audio_service = AudioService()
+    chatbot_service = ChatbotService()
+    
+except ImportError as e:
+    st.error(f"Import error: {e}")
+    st.stop()
 
 # Page configuration
 st.set_page_config(
@@ -25,24 +40,23 @@ st.set_page_config(
     }
 )
 
-# Initialize services - NO CACHING to avoid import issues
-def initialize_services():
-    """Initialize all services fresh every time."""
+# Simple service initialization
+def initialize_gemini():
+    """Initialize Gemini service directly."""
     try:
-        # Direct imports - no factory pattern to avoid caching issues
-        from services.gemini_service import GeminiService
-        from services.audio_service import AudioService
-        from services.chatbot_service import ChatbotService
+        api_key = os.environ.get("GEMINI_API_KEY")
+        if not api_key:
+            st.error("❌ GEMINI_API_KEY not found in secrets. Please add it in Streamlit Cloud settings.")
+            st.info("Go to App Settings → Secrets and add: GEMINI_API_KEY = 'your_key_here'")
+            st.stop()
         
-        gemini_service = GeminiService()
-        audio_service = AudioService()
-        chatbot_service = ChatbotService()
-        
-        return gemini_service, audio_service, chatbot_service
+        genai.configure(api_key=api_key)
+        model = genai.GenerativeModel("gemini-1.5-flash")
+        return model
         
     except Exception as e:
-        st.error(f"Service initialization failed: {str(e)}")
-        raise e
+        st.error(f"Failed to initialize Gemini: {str(e)}")
+        st.stop()
 
 # Custom CSS for enhanced styling
 st.markdown("""
@@ -249,58 +263,10 @@ input:checked + .slider:before {
 """, unsafe_allow_html=True)
 
 def main():
-    # Header with logo
-    col_logo, col_title, col_theme = st.columns([1, 3, 1])
+    # Initialize Gemini
+    model = initialize_gemini()
     
-    with col_logo:
-        with open("logo.svg", "r") as f:
-            logo_svg = f.read()
-        st.markdown(f'<div class="logo-container" style="text-align: center; padding-top: 1rem;">{logo_svg}</div>', unsafe_allow_html=True)
-    
-    with col_title:
-        st.markdown('<div class="main-header">Vispio</div>', unsafe_allow_html=True)
-        st.markdown('<div class="subtitle">Let AI Speak Your Pictures</div>', unsafe_allow_html=True)
-    
-    with col_theme:
-        # Theme toggle switch using Streamlit
-        st.markdown("<br>", unsafe_allow_html=True)
-        dark_mode = st.toggle("🌙 Dark Mode", key="theme_toggle")
-        
-        # Apply dark theme if enabled
-        if dark_mode:
-            st.markdown("""
-            <style>
-            .stApp {
-                background-color: #0E1117 !important;
-                color: #FAFAFA !important;
-            }
-            .feature-card {
-                background: #262730 !important;
-                color: #FAFAFA !important;
-            }
-            .hero-section {
-                background: linear-gradient(135deg, #1f2937 0%, #374151 100%) !important;
-            }
-            </style>
-            """, unsafe_allow_html=True)
-    
-    # Initialize services with retry mechanism
-    try:
-        gemini_service, audio_service, chatbot_service = initialize_services()
-        
-        # Debug info for development
-        if st.session_state.get('show_debug', False):
-            st.sidebar.write("🔧 Debug Info:")
-            st.sidebar.write(f"Gemini methods: {len([m for m in dir(gemini_service) if not m.startswith('_')])}")
-            st.sidebar.write(f"Chatbot methods: {len([m for m in dir(chatbot_service) if not m.startswith('_')])}")
-            
-    except Exception as e:
-        st.error(f"Failed to initialize services: {str(e)}")
-        
-        # Show error message only
-        st.info("Please check your API key configuration.")
-        
-        st.stop()
+    st.success("✅ Gemini AI connected successfully!")
     
     # Settings toggle button in top area
     col_settings_btn, col_spacer = st.columns([1, 4])
@@ -459,7 +425,6 @@ def main():
                     with st.spinner(f"Generating {analysis_type.lower()}..."):
                         try:
                             # Optimize image for API
-                            from utils.image_utils import optimize_image_for_api
                             img_bytes = optimize_image_for_api(st.session_state.current_image, max_file_size_mb=2.0)
                             
                             # Generate analysis based on selected type
@@ -629,7 +594,6 @@ def main():
                         if st.button("💡 Get Suggested Questions", use_container_width=True):
                             with st.spinner("Generating suggested questions..."):
                                 try:
-                                    from utils.image_utils import optimize_image_for_api
                                     img_bytes = optimize_image_for_api(chat_image, max_file_size_mb=2.0)
                                     suggested_questions = chatbot_service.get_suggested_questions(img_bytes)
                                     st.session_state.suggested_questions = suggested_questions
@@ -688,7 +652,6 @@ def main():
                                 # Generate AI response with intelligent routing
                                 if 'chat_image_uploaded' in st.session_state and st.session_state.chat_image_uploaded:
                                     # Chat with image - detect question type for specialized analysis
-                                    from utils.image_utils import optimize_image_for_api
                                     img_bytes = optimize_image_for_api(st.session_state.chat_image, max_file_size_mb=2.0)
                                     
                                     # Detect if this is a location or product question

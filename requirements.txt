@@ -1,4 +1,4 @@
-# Cache bust: 2024-08-15-18:35 - Force fresh Streamlit Cloud deployment
+# Cache bust: 2024-08-15-19:00 - Fixed version conflicts for Streamlit Cloud deployment
 # Core Streamlit Application
 streamlit==1.45.1
 
@@ -54,3 +54,7 @@ toml==0.10.2
 tornado==6.4
 tzlocal==5.3.1
 watchdog==6.0.0
+
+# Fixed version conflicts
+pydantic==2.7.4
+joblib==1.1.0
