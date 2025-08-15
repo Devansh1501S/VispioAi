@@ -381,14 +381,17 @@ input:checked + .slider:before {
 """, unsafe_allow_html=True)
 
 def main():
-    # Initialize Gemini
-    try:
-        model = initialize_gemini()
-        st.success("✅ Gemini AI connected successfully!")
-    except Exception as e:
-        st.warning(f"⚠️ Gemini initialization warning: {e}")
-        st.info("Continuing with fallback service...")
-        model = None
+    # Initialize Gemini only if the library is available
+    model = None
+    if genai is not None:
+        try:
+            model = initialize_gemini()
+            st.success("✅ Gemini AI connected successfully!")
+        except Exception as e:
+            st.warning(f"⚠️ Gemini initialization warning: {e}")
+            st.info("Continuing with fallback service...")
+    else:
+        st.info("✅ Using fallback HTTP-based Gemini service")
     
     # Settings toggle button in top area
     col_settings_btn, col_spacer = st.columns([1, 4])
