@@ -39,15 +39,20 @@ try:
 except ImportError as e:
     st.warning(f"Method 1 failed: {e}")
 
-# Method 2: Try with pip install first
+# Method 2: Try with pip install first (only if not already installed)
 if not import_success:
     try:
         import subprocess
         import sys
         st.info("🔄 Attempting to install google-generativeai...")
-        subprocess.check_call([sys.executable, "-m", "pip", "install", "google-generativeai==0.8.5"])
+        # Use --no-cache-dir to avoid cache issues
+        subprocess.check_call([
+            sys.executable, "-m", "pip", "install", 
+            "--no-cache-dir", "--force-reinstall", 
+            "google-generativeai==0.8.5"
+        ])
         import google.generativeai as genai
-        st.success("✅ google.generativeai imported successfully (Method 2)")
+        st.success("✅ google-generativeai imported successfully (Method 2)")
         import_success = True
     except Exception as e:
         st.warning(f"Method 2 failed: {e}")
@@ -67,11 +72,29 @@ if not import_success:
             st.error(f"❌ All import methods failed: {e}")
 
 if not import_success:
-    st.error("❌ Failed to import google-generativeai")
-    st.error("Please ensure google-generativeai==0.8.5 is in requirements.txt")
-    st.error("Streamlit Cloud should install it automatically during deployment")
-    st.error("If the issue persists, try redeploying or check the deployment logs")
-    st.stop()
+    st.warning("⚠️ google-generativeai library failed to import")
+    st.info("🔄 Using fallback HTTP-based service instead...")
+    
+    # Import fallback service
+    try:
+        from services.gemini_fallback import GeminiFallbackService
+        st.success("✅ Fallback service loaded successfully")
+        import_success = True  # We'll use fallback
+    except ImportError as e:
+        st.error(f"❌ Fallback service also failed: {e}")
+        st.error("Please ensure google-generativeai==0.8.5 is in requirements.txt")
+        st.error("Streamlit Cloud should install it automatically during deployment")
+        st.error("If the issue persists, try redeploying or check the deployment logs")
+        
+        # Show what packages are actually installed
+        try:
+            import pkg_resources
+            installed_packages = [d.project_name for d in pkg_resources.working_set]
+            st.info(f"Installed packages: {[pkg for pkg in installed_packages if 'google' in pkg.lower()]}")
+        except:
+            pass
+        
+        st.stop()
 
 try:
     from dotenv import load_dotenv
@@ -83,15 +106,29 @@ except ImportError as e:
 
 try:
     # Import services
-    from services.gemini_service import GeminiService
     from services.audio_service import AudioService
     from services.chatbot_service import ChatbotService
     
     # Import utility functions
     from utils.image_utils import resize_image, optimize_image_for_api
     
-    # Initialize services
-    gemini_service = GeminiService()
+    # Initialize services based on import success
+    if genai is not None:
+        # Use the library-based service
+        from services.gemini_service import GeminiService
+        gemini_service = GeminiService()
+        st.success("✅ Using google-generativeai library service")
+    else:
+        # Use the fallback HTTP-based service
+        api_key = os.environ.get("GEMINI_API_KEY")
+        if not api_key:
+            st.error("❌ GEMINI_API_KEY not found in secrets. Please add it in Streamlit Cloud settings.")
+            st.info("Go to App Settings → Secrets and add: GEMINI_API_KEY = 'your_key_here'")
+            st.stop()
+        
+        gemini_service = GeminiFallbackService(api_key)
+        st.success("✅ Using fallback HTTP-based service")
+    
     audio_service = AudioService()
     chatbot_service = ChatbotService()
     
